@@ -9,3 +9,4 @@ vectorbt
 scikit-learn  
 matplotlib 
 alpaca-trade-api
+ccxt

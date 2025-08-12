@@ -4,7 +4,7 @@
 import pandas as pd
 
 def load_data(csv_path, start_date=None, end_date=None):
-    df = pd.read_csv(csv_path, parse_dates=["Date"])
+    df = pd.read_csv(csv_path)
     if start_date:
         df = df[df["Date"] >= start_date]
     if end_date:

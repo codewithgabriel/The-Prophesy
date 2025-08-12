@@ -10,4 +10,6 @@ scikit-learn
 matplotlib 
 ccxt
 alpaca-trade-api
-alpha_vantage
+alpha_vantage==2.3.1
+plotly
+plotly-resampler

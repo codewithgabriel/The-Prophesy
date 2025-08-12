@@ -1,6 +1,6 @@
 numpy 
 pandas
-yfinanc 
+yfinance 
 pandas-ta 
 stable-baselines3 
 gymnasium  

@@ -26,8 +26,8 @@ if menu == "Backtest":
         train_df , test_df  = load_and_prepare_data()
         _ , eval_env = create_env(train_df, test_df)
         networth , trades = run_backtest(model, test_df)
-        st.plotly_chart(plot_equity_curve(trades, CONFIG["initial_balance"]), use_container_width=True)
-        st.plotly_chart(plot_trades(test_df, networth), use_container_width=True)
+        st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
+        st.plotly_chart(plot_trades(test_df, trades), use_container_width=True)
 
 elif menu == "Live Trading":
     broker_type = st.sidebar.selectbox("Broker", ["Alpaca", "Binance (CCXT)"])

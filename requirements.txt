@@ -1,4 +1,4 @@
-numpy >= 1.25
+numpy 
 pandas >= 2.1
 yfinance >= 0.2.18
 stable-baselines3 >= 2.6.0
@@ -8,7 +8,7 @@ vectorbt >= 0.24.0
 scikit-learn >= 1.2
 matplotlib >= 3.6
 
-pandas-ta
+pandas-ta >= 0.3.140b
 ccxt
 alpaca-trade-api
 alpha_vantage == 2.3.1

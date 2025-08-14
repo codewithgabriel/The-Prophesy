@@ -9,5 +9,3 @@ def train_model(env, config):
     model.save(config["model_save_path"])
     return model
 
-def load_model(path):
-    return PPO.load(path)

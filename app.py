@@ -4,35 +4,31 @@
 import streamlit as st
 import pandas as pd
 from envs.config import CONFIG
-from utils import load_data, save_trades_to_csv
+from utils import load_and_prepare_data, load_data, save_trades_to_csv
 from  models.model import train_model, load_model
 from dashboard import plot_equity_curve, plot_trades
 from brokers.broker_alpaca import AlpacaBroker
 from brokers.broker_ccxt import CCXTBroker
-from models.train_ppo import  train_ppo_model , make_env
+from models.train_ppo import  train_ppo_model 
+from utils import run_backtest , create_env
+
 st.set_page_config(layout="wide")
 st.title("📈 RL Trading Dashboard")
 
 menu = st.sidebar.selectbox("Menu", ["Backtest", "Live Trading"])
 
 if menu == "Backtest":
-    df = load_data(save=True)
-    env = make_env(df, train_mode=True)
-
     if st.sidebar.button("Train Model"):
         model = train_ppo_model()
         st.success("Model trained and saved!")
 
     if st.sidebar.button("Load Model"):
-        model = load_model(CONFIG['model_save_path'])
-        obs = env.reset()
-        done = False
-        while not done:
-            action, _ = model.predict(obs)
-            obs, reward, done, _ = env.step(action)
-        save_trades_to_csv(env.trades)
-        st.plotly_chart(plot_equity_curve(env.trades, CONFIG["initial_balance"]), use_container_width=True)
-        st.plotly_chart(plot_trades(df, env.trades), use_container_width=True)
+        model = load_model()
+        train_df , test_df  = load_and_prepare_data()
+        env = create_env(train_df, test_df)
+        networth , trades = run_backtest(model, test_df)
+        st.plotly_chart(plot_equity_curve(trades, CONFIG["initial_balance"]), use_container_width=True)
+        st.plotly_chart(plot_trades(test_df, trades), use_container_width=True)
 
 elif menu == "Live Trading":
     broker_type = st.sidebar.selectbox("Broker", ["Alpaca", "Binance (CCXT)"])

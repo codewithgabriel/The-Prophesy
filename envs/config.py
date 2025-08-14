@@ -3,7 +3,7 @@
 # CONFIGURATION
 # ========================
 CONFIG = {
-    # Data
+    # Meta data
     "asset_symbol": "AAPL",
     "csv_path": "dataset/aapl.csv",  # if None, fetch from API
     "start_date": "2015-01-01",

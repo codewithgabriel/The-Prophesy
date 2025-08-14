@@ -1,4 +1,4 @@
-from trading_env import TradingEnv
+from envs.trading_env import TradingEnv
 import pandas as pd
 from envs.config import CONFIG
 

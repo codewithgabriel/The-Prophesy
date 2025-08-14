@@ -25,7 +25,7 @@ if menu == "Backtest":
     if st.sidebar.button("Load Model"):
         model = load_model()
         train_df , test_df  = load_and_prepare_data()
-        env = create_env(train_df, test_df)
+        _ , eval_env = create_env(train_df, test_df)
         networth , trades = run_backtest(model, test_df)
         st.plotly_chart(plot_equity_curve(trades, CONFIG["initial_balance"]), use_container_width=True)
         st.plotly_chart(plot_trades(test_df, trades), use_container_width=True)

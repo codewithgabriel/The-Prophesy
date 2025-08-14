@@ -71,3 +71,4 @@ def create_env(train_df, test_df):
      # 3) Vectorized environments for parallelism
     env = DummyVecEnv([lambda: make_env(train_df, train_mode=True)])
     eval_env = DummyVecEnv([lambda: make_env(test_df, train_mode=False)])
+    return env, eval_env

@@ -28,7 +28,7 @@ from data_fetcher import download_price_data
 # ========================
 # ENV FACTORY
 # ========================
-def make_env(df, train_mode=True):
+def make_env(df: pd.DataFrame, train_mode=True):
     """
     Creates the trading environment instance with consistent parameters.
     """

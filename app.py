@@ -17,7 +17,7 @@ menu = st.sidebar.selectbox("Menu", ["Backtest", "Live Trading"])
 
 if menu == "Backtest":
     df = load_data(save=True)
-    env = make_env(df, CONFIG, train_mode=True)
+    env = make_env(df, train_mode=True)
 
     if st.sidebar.button("Train Model"):
         model = train_ppo_model()

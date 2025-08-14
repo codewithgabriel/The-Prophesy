@@ -57,7 +57,7 @@ def make_env(df, train_mode=True):
 # ========================
 # MAIN TRAINING LOGIC
 # ========================
-def train_model():
+def train_ppo_model():
     # 1) Load & prepare data
     if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
         df = pd.read_csv(CONFIG["csv_path"])

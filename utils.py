@@ -2,19 +2,29 @@
 # 📂 trading_app/utils.py
 # ================================================
 import pandas as pd
+from envs.config import CONFIG
+from technical_analysis import add_technical_indicators
+import os
+from data_fetcher import download_price_data
 
-def load_data(csv_path, start_date=None, end_date=None):
-    df = pd.read_csv(csv_path)
-    print(df.columns.tolist())
-    # if start_date:
-    #     df = df[df["Date"] >= start_date]
-    # if end_date:
-    #     df = df[df["Date"] <= end_date]
-    # df = df.sort_values("Date").reset_index(drop=True)
+
+def load_data(save=False):
+    # 1) Load & prepare data
+    if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
+        df = pd.read_csv(CONFIG["csv_path"])
+    else:
+        df = download_price_data(CONFIG["asset_symbol"], CONFIG["start_date"], CONFIG["end_date"])
+    
+    # Ensure numeric types for OHLCV data
+    for col in ["Open", "High", "Low", "Close", "Volume"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")  # convert to float, NaN if invalid
+    df = add_technical_indicators(df)
+    if save:
+        df.to_csv(CONFIG["csv_path"], index=False)
+        print("Data saved to:", CONFIG["csv_path"])
     return df
 
 def save_trades_to_csv(trades, filename="trades.csv"):
     pd.DataFrame(trades).to_csv(filename, index=False)
 
-
-load_data("dataset/aapl.csv", start_date="2020-01-01", end_date="2020-12-31")

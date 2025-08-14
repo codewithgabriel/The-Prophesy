@@ -2,6 +2,7 @@
 # 📂 trading_app/main.py
 # ================================================
 import streamlit as st
+import pandas as pd
 from envs.config import CONFIG
 from utils import load_data, save_trades_to_csv
 from envs.trading_env import TradingEnv
@@ -9,20 +10,22 @@ from  models.model import train_model, load_model
 from dashboard import plot_equity_curve, plot_trades
 from brokers.broker_alpaca import AlpacaBroker
 from brokers.broker_ccxt import CCXTBroker
-
+from models.train_ppo import  train_ppo_model , make_env
 st.set_page_config(layout="wide")
 st.title("📈 RL Trading Dashboard")
 
 menu = st.sidebar.selectbox("Menu", ["Backtest", "Live Trading"])
 
 if menu == "Backtest":
-    df = load_data(CONFIG["csv_path"], CONFIG["start_date"], CONFIG["end_date"])
-    env = TradingEnv(df, CONFIG)
+    df = load_data(save=True)
+    env = make_env(df, CONFIG, train_mode=True)
+
     if st.sidebar.button("Train Model"):
-        model = train_model(env, CONFIG)
+        model = train_ppo_model()
         st.success("Model trained and saved!")
+
     if st.sidebar.button("Load Model"):
-        model = load_model(CONFIG["model_save_path"])
+        model = load_model(CONFIG['model_save_path'])
         obs = env.reset()
         done = False
         while not done:

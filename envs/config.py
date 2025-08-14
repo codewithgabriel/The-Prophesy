@@ -49,6 +49,6 @@ CONFIG = {
     
     # Logging & saving
     "tensorboard_log_dir": "saved_models/ppo/tb_logs",
-    "model_save_path": "saved_models/ppo/ppo_trader_model"
+    "model_save_path": "saved_models/ppo/ppo_trader_model/final_model"
 }
 

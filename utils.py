@@ -10,7 +10,7 @@ import numpy as np
 import numpy as np
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3 import PPO
-from envs.make_env import make_env
+from envs.make_env import make_env, make_eval_env
 
 def load_model():
     return PPO.load(CONFIG['model_save_path'])
@@ -26,7 +26,7 @@ def run_backtest(model , test_df, window_size=50):
         equity_curve: np.ndarray of net worth values
         trades: trade log (copied during execution)
     """
-    env = make_env(test_df, window_size)
+    env = make_eval_env(test_df, window_size)
     obs = env.reset()
     net_worths = []
     trades = []  # We'll store copies here during execution

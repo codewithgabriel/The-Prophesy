@@ -5,7 +5,6 @@ import streamlit as st
 import pandas as pd
 from envs.config import CONFIG
 from utils import load_data, save_trades_to_csv
-from envs.trading_env import TradingEnv
 from  models.model import train_model, load_model
 from dashboard import plot_equity_curve, plot_trades
 from brokers.broker_alpaca import AlpacaBroker

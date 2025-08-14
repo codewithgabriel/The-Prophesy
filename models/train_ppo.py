@@ -19,6 +19,8 @@ from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewar
 from envs.trading_env import TradingEnv
 from technical_analysis import add_technical_indicators
 from envs.config import CONFIG
+from data_fetcher import download_price_data
+
 # Custom imports (replace with your paths)
 # from features import add_technical_indicators
 # from envs.realistic_trading_env import RealisticTradingEnv  # our upgraded env
@@ -62,7 +64,6 @@ def train_ppo_model():
     if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
         df = pd.read_csv(CONFIG["csv_path"])
     else:
-        from data_fetcher import download_price_data
         df = download_price_data(CONFIG["asset_symbol"], CONFIG["start_date"], CONFIG["end_date"])
     
     # Ensure numeric types for OHLCV data

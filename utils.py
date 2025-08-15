@@ -90,7 +90,7 @@ import pandas as pd
 
 def plot_equity_curve(networth, initial_balance):
     df = pd.DataFrame(networth)
-    df["net_worth"] = initial_balance + (df["shares"] * df["price"]).cumsum()
+    df["net_worth"] = initial_balance + (df["value"]).cumsum()
     fig = go.Figure()
     fig.add_trace(go.Scatter(y=df["net_worth"], mode="lines", name="Equity Curve"))
     return fig

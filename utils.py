@@ -90,7 +90,7 @@ import pandas as pd
 
 def plot_equity_curve(networth, initial_balance):
     fig = go.Figure()
-    fig.add_trace(go.Scatter(y=networth["value"], mode="lines", name="Equity Curve"))
+    fig.add_trace(go.Scatter(y=networth, mode="lines", name="Equity Curve"))
     return fig
 
 

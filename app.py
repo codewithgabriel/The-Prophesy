@@ -20,7 +20,7 @@ if menu == "Backtest":
         model = train_ppo_model()
         st.success("Model trained and saved!")
 
-    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=1000, value=200, step=50)
+    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=1000, value=200, step=10)
 
     if st.sidebar.button("Load Model"):
         model = load_model()

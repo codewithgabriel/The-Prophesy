@@ -20,13 +20,16 @@ if menu == "Backtest":
         model = train_ppo_model()
         st.success("Model trained and saved!")
 
+    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=1000, value=200, step=50)
+
     if st.sidebar.button("Load Model"):
         model = load_model()
-        train_df , test_df  = load_and_prepare_data()
-        _ , eval_env = create_env(train_df, test_df)
-        networth , trades = run_backtest(model, test_df)
+        train_df, test_df = load_and_prepare_data()
+        _, eval_env = create_env(train_df, test_df)
+        networth, trades = run_backtest(model, test_df)
+
+        st.plotly_chart(plot_trades(test_df, trades, max_trades=max_trades), use_container_width=True)
         # st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
-        st.plotly_chart(plot_trades(test_df, trades), use_container_width=True)
 
 elif menu == "Live Trading":
     broker_type = st.sidebar.selectbox("Broker", ["Alpaca", "Binance (CCXT)"])

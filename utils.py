@@ -95,9 +95,32 @@ def plot_equity_curve(networth, initial_balance):
     fig.add_trace(go.Scatter(y=df["net_worth"], mode="lines", name="Equity Curve"))
     return fig
 
+
 def plot_trades(df, trades):
-    print(trades)
-    fig = go.Figure(data=[go.Candlestick(x=df["Date"], open=df["Open"], high=df["High"], low=df["Low"], close=df["Close"])])
+    fig = go.Figure(data=[
+        go.Candlestick(
+            x=df["Date"],
+            open=df["Open"],
+            high=df["High"],
+            low=df["Low"],
+            close=df["Close"],
+            name="Price"
+        )
+    ])
+
     for t in trades:
-        fig.add_trace(go.Scatter(x=[df.iloc[t["step"]]["Date"]], y=[t["price"]], mode="markers", marker=dict(color="green" if t["shares"] > 0 else "red"), name="Trade"))
+        trade_time = df.loc[t["index"], "Date"]  # Get timestamp
+        trade_price = df.loc[t["index"], "Close"]  # Or use t["price"] if available
+        color = "green" if t["position_shares"] > 0 else "red"
+
+        fig.add_trace(go.Scatter(
+            x=[trade_time],
+            y=[trade_price],
+            mode="markers",
+            marker=dict(color=color, size=10, symbol="circle"),
+            name="Trade"
+        ))
+
+    fig.update_layout(title="Trade Plot", xaxis_title="Date", yaxis_title="Price")
     return fig
+

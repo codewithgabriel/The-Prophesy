@@ -90,7 +90,7 @@ def plot_equity_curve(networth, initial_balance):
     return fig
 
 def plot_trades(df, trades):
-    
+    print(df.head())
     fig = go.Figure(data=[go.Candlestick(x=df["Date"], open=df["Open"], high=df["High"], low=df["Low"], close=df["Close"])])
     for t in trades:
         fig.add_trace(go.Scatter(x=[df.iloc[t["step"]]["Date"]], y=[t["price"]], mode="markers", marker=dict(color="green" if t["shares"] > 0 else "red"), name="Trade"))

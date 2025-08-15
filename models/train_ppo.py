@@ -10,13 +10,9 @@ Includes:
 """
 
 import os
-import pandas as pd
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
-from envs.trading_env import TradingEnv
-from technical_analysis import add_technical_indicators
 from envs.config import CONFIG
-from data_fetcher import download_price_data
 
 
 

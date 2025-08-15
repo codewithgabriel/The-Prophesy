@@ -53,6 +53,7 @@ def load_and_prepare_data():
         df = pd.read_csv(CONFIG["csv_path"])
         df["Date"] = pd.to_datetime(df["Date"])
     else:
+        
         df = download_price_data(CONFIG["asset_symbol"], CONFIG["start_date"], CONFIG["end_date"])
         df["Date"] = pd.to_datetime(df["Date"])
     

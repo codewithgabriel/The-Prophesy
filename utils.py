@@ -50,12 +50,15 @@ def run_backtest(model , test_df, window_size=50):
 def load_and_prepare_data():
 # 1) Load & prepare data
     if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
+        print("Loading data from CSV...")
         df = pd.read_csv(CONFIG["csv_path"])
         df["Date"] = pd.to_datetime(df["Date"])
+        print(df.columns.tolist())
     else:
-        
+        print("Downloading data from source...")
         df = download_price_data(CONFIG["asset_symbol"], CONFIG["start_date"], CONFIG["end_date"])
         df["Date"] = pd.to_datetime(df["Date"])
+        print(df.columns.tolist())
     
     df = df.sort_values("Date").reset_index(drop=True)
     print(df.columns.tolist())

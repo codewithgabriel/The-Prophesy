@@ -51,9 +51,13 @@ def load_and_prepare_data():
 # 1) Load & prepare data
     if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
         df = pd.read_csv(CONFIG["csv_path"])
+        df["Date"] = pd.to_datetime(df["Date"])
     else:
         df = download_price_data(CONFIG["asset_symbol"], CONFIG["start_date"], CONFIG["end_date"])
+        df["Date"] = pd.to_datetime(df["Date"])
     
+    df = df.sort_values("Date").reset_index(drop=True)
+    print(df.columns.tolist())
     # Ensure numeric types for OHLCV data
     for col in ["Open", "High", "Low", "Close", "Volume"]:
         if col in df.columns:
@@ -82,7 +86,6 @@ import pandas as pd
 
 def plot_equity_curve(networth, initial_balance):
     df = pd.DataFrame(networth)
-    print(df.columns.tolist())
     df["net_worth"] = initial_balance + (df["shares"] * df["price"]).cumsum()
     fig = go.Figure()
     fig.add_trace(go.Scatter(y=df["net_worth"], mode="lines", name="Equity Curve"))
@@ -90,7 +93,7 @@ def plot_equity_curve(networth, initial_balance):
 
 def plot_trades(df, trades):
     print(df.head())
-    print(df.columns.tolist())
+   
 
     fig = go.Figure(data=[go.Candlestick(x=df["Date"], open=df["Open"], high=df["High"], low=df["Low"], close=df["Close"])])
     for t in trades:

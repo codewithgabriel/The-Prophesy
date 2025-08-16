@@ -17,7 +17,9 @@ menu = st.sidebar.selectbox("Menu", ["Backtest", "Live Trading"])
 
 if menu == "Backtest":
     if st.sidebar.button("Train Model"):
-        model = train_ppo_model()
+        train_df, test_df = load_and_prepare_data()
+        env, eval_env = create_env(train_df, test_df)
+        model = train_ppo_model(env ,  eval_env)
         st.success("Model trained and saved!")
 
     max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=1000, value=200, step=10)

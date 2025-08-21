@@ -440,7 +440,7 @@ if menu == "Configuration":
     CONFIG["turnover_penalty_coeff"] = st.sidebar.slider("Turnover Penalty Coeff", 0.0, 10.0, CONFIG.get("turnover_penalty_coeff", 0.0))
     CONFIG["normalize_observations"] = st.sidebar.checkbox("Normalize Observations", value=CONFIG.get("normalize_observations", True))
     CONFIG["random_start"] = st.sidebar.checkbox("Random Start", value=CONFIG.get("random_start", True))
-    CONFIG["episode_length"] = st.sidebar.number_input("Episode Length", min_value=1, value=CONFIG.get("episode_length", 0) or 0)
+    CONFIG["episode_length"] = st.sidebar.number_input("Episode Length", min_value=0, value=CONFIG.get("episode_length", 0) or 0)
     CONFIG["total_timesteps"] = st.sidebar.number_input("Total Timesteps", min_value=1, value=CONFIG.get("total_timesteps", 300000))
     CONFIG["tensorboard_log_dir"] = st.sidebar.text_input("Tensorboard Log Dir", CONFIG.get("tensorboard_log_dir", "saved_models/ppo/tb_logs"))
     CONFIG["model_save_path"] = st.sidebar.text_input("Model Save Path", CONFIG.get("model_save_path", "saved_models/ppo_trader_model/final_model.zip"))

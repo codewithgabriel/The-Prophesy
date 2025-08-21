@@ -229,5 +229,6 @@ def plot_trades(df, trades, max_trades=100):
     fig.update_yaxes(title_text="Price ($)", row=1, col=1)
     fig.update_yaxes(title_text="Volume", row=2, col=1)
     fig.update_xaxes(title_text="Date", row=2, col=1)
-    
+    print(buys)
+    print(sells)    
     return fig

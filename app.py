@@ -239,7 +239,7 @@ elif menu == "Backtest":
                 
                 # Run backtest with progress updates
                 networth, trades = run_backtest(model, test_df, train_df)
-                col2.write(trades[:10])
+               
                 
                 
                 # Store results in session state

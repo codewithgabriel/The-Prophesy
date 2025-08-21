@@ -264,7 +264,7 @@ elif menu == "Backtest":
         st.sidebar.markdown(f'<div class="progress-bar"><div class="progress-fill" style="width: {st.session_state.training_progress}%;"></div></div>', unsafe_allow_html=True)
         st.sidebar.text(f"{st.session_state.training_progress}% complete")
     
-    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=1000, value=200, step=10)
+    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=5000, value=200, step=1)
     
     # Display backtest results if available
     if st.session_state.backtest_results:

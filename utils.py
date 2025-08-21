@@ -16,8 +16,8 @@ def load_model():
 def save_trades_to_csv(trades, filename="trades.csv"):
     pd.DataFrame(trades).to_csv(filename, index=False)
 
-def run_backtest(model, test_df, window_size=50):
-    env , eval_env = create_env(test_df, window_size)
+def run_backtest(model, test_df, train_df):
+    _ , env = create_env(test_df, train_df)
     obs = env.reset()
     net_worths, trades = [], []
     done = [False]

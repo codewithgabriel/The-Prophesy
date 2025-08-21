@@ -12,6 +12,7 @@ from stable_baselines3 import PPO
 from envs.make_env import make_env, make_eval_env
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from time import sleep
 
 def load_model():
     return PPO.load(CONFIG['model_save_path'])
@@ -35,6 +36,7 @@ def run_backtest(model, test_df, window_size=50):
     while not done[0]:
         action, _ = model.predict(obs, deterministic=True)
         obs, reward, done, info = env.step(action)
+        sleep(1)
         
         # Store current net worth
         net_worths.append(info[0]['net_worth'])

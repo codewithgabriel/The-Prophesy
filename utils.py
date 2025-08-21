@@ -147,7 +147,7 @@ def plot_trades(df, trades, max_trades=100):
             action = t.get("action", "")
             order_type = t.get("type", "")
             
-            print(f"Trade details - position_shares: {position_shares}, action: {action}, order_type: {order_type}")
+            # print(f"Trade details - position_shares: {position_shares}, action: {action}, order_type: {order_type}")
             
             # Determine if it's a buy or sell
             is_buy = (position_shares > 0 or 
@@ -173,8 +173,8 @@ def plot_trades(df, trades, max_trades=100):
             print(f"Error processing trade {i}: {e}")
             continue
 
-    print(f"Total BUY trades: {len(buys[0])}")
-    print(f"Total SELL trades: {len(sells[0])}")
+    # print(f"Total BUY trades: {len(buys[0])}")
+    # print(f"Total SELL trades: {len(sells[0])}")
 
     # Add buy markers
     if buys[0]:

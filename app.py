@@ -110,7 +110,7 @@ if menu == "Dashboard":
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        
         st.metric("Current Balance", f"${st.session_state.current_balance:,.2f}")
         
         # Balance indicator
@@ -120,25 +120,25 @@ if menu == "Dashboard":
         balance_position = ((st.session_state.current_balance - min_balance) / balance_range * 100) if balance_range > 0 else 50
         
         st.markdown(f'<div class="balance-indicator"><div class="balance-marker" style="left: {balance_position}%;"></div></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        
     
     with col2:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        
         profit_loss = st.session_state.current_balance - CONFIG["initial_balance"]
         pnl_class = "positive-value" if profit_loss >= 0 else "negative-value"
         st.metric("Profit/Loss", f"${profit_loss:,.2f}", delta=f"{profit_loss/CONFIG['initial_balance']*100:.2f}%")
-        st.markdown('</div>', unsafe_allow_html=True)
+        
     
     with col3:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        
         st.metric("Total Trades", str(len(st.session_state.trade_decisions)))
-        st.markdown('</div>', unsafe_allow_html=True)
+        
     
     with col4:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        
         win_rate = len([t for t in st.session_state.trade_decisions if t.get('profit', 0) > 0]) / len(st.session_state.trade_decisions) * 100 if st.session_state.trade_decisions else 0
         st.metric("Win Rate", f"{win_rate:.2f}%")
-        st.markdown('</div>', unsafe_allow_html=True)
+        
     
     # Display equity curve if available
     if st.session_state.backtest_results:

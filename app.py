@@ -150,7 +150,7 @@ if menu == "Dashboard":
     # Recent trade decisions table
     if st.session_state.trade_decisions:
         st.subheader("Recent Trading Decisions")
-        recent_trades = pd.DataFrame(st.session_state.trade_decisions[-10:])  # Show last 10 trades
+        recent_trades = pd.DataFrame(st.session_state.trade_decisions)  # Show last 10 trades
         
         # Format the DataFrame for display
         display_df = recent_trades.copy()

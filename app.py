@@ -285,7 +285,8 @@ elif menu == "Backtest":
             
             with col2:
                 st.metric("Number of Trades", len(trades))
-                st.write(trades[:max_trades])  # Display first few trades
+               
+               
                 
                 winning_trades = len([t for t in trades if t.get('profit', 0) > 0])
                 st.metric("Winning Trades", f"{winning_trades} ({winning_trades/len(trades)*100:.2f}%)" if trades else "0")

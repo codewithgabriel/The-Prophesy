@@ -268,7 +268,7 @@ class TradingEnv(gym.Env):
                 "notional": float(executed_notional),
                 "commission": float(commission),
                 "position_shares": float(self.position_shares),
-                "profit": float(price),
+                "profit": float(profit),
             })
 
         position_value = self.position_shares * price

@@ -48,7 +48,7 @@ def run_backtest(model, test_df, env):
         
     return np.array(net_worths), trades
 
-def load_and_prepare_data(start_date, end_date, split=True):
+def load_and_prepare_data(start_date, end_date, split=True, interval="1d"):
     # # 1) Load & prepare data
     # if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
     #     print("Loading data from CSV...")
@@ -58,7 +58,7 @@ def load_and_prepare_data(start_date, end_date, split=True):
     # else:
     #     print("Downloading data from source...")
     
-    df = download_price_data(CONFIG["asset_symbol"], start_date, end_date)
+    df = download_price_data(CONFIG["asset_symbol"], start_date, end_date, interval=interval)
     df["Date"] = pd.to_datetime(df["Date"])
     print(df.columns.tolist())
 

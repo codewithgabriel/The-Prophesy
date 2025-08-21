@@ -196,7 +196,7 @@ elif menu == "Backtest":
     if st.button("Backtest model"):
         try:
             model = load_model()
-            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
+            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False, interval=CONFIG["timeframe"])
             _, eval_env = create_env(train_df, test_df)
             
             # Initialize progress for backtest
@@ -240,7 +240,7 @@ elif menu == "Backtest":
     # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
-        _, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
+        _, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False, interval=CONFIG["timeframe"])
 
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])
@@ -391,7 +391,7 @@ elif menu == "Model Training":
     if st.button("Start Training"):
         try:
             progress_bar.progress(10)
-            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, interval=CONFIG["timeframe"])
             status_text.text("Data loaded successfully. Creating environments...")
             progress_bar.progress(30)
             env, eval_env = create_env(train_df, test_df)
@@ -401,6 +401,13 @@ elif menu == "Model Training":
             st.session_state.model = model
             st.success("Model trained and saved successfully!")
             progress_bar.progress(100)
+            with open(CONFIG["model_save_path"], "rb") as model_file:
+                st.download_button(
+                    label="Download Trained Model",
+                    data=model_file.read(),
+                    file_name="ppo_trader_model.zip",
+                    mime="application/zip"
+                )
         except Exception as e:
             st.session_state.training_status = f"Training failed: {str(e)}"
             st.error(f"Training error: {str(e)}")
@@ -454,3 +461,11 @@ if st.sidebar.button("Save Config"):
     with open("config.json", "w") as f:
         json.dump(CONFIG, f)
     st.sidebar.success("Configuration saved successfully!")
+    with open("config.json", "r") as f:
+        config_data = f.read()
+    st.sidebar.download_button(
+        label="Download Config",
+        data=config_data,
+        file_name="config.json",
+        mime="application/json"
+    )

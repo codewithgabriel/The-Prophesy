@@ -233,7 +233,7 @@ elif menu == "Backtest":
                 backtest_status = st.empty()
                 
                 # Run backtest with progress updates
-                networth, trades = run_backtest(model, test_df, eval_env)
+                networth, trades = run_backtest(model, test_df, env=eval_env)
                 
                 # Store results in session state
                 st.session_state.backtest_results = (networth, trades)

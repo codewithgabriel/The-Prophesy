@@ -393,3 +393,5 @@ elif menu == "Model Training":
         except Exception as e:
             st.session_state.training_status = f"Training failed: {str(e)}"
             st.error(f"Training error: {str(e)}")
+            progress_bar.empty()
+            status_text.empty()

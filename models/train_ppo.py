@@ -36,7 +36,7 @@ def train_ppo_model(env, eval_env):
     # 5) Evaluation callback
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path=CONFIG["model_save_path"],
+        best_model_save_path='../' + CONFIG["model_save_path"],
         log_path=CONFIG["tensorboard_log_dir"],
         eval_freq=5000,
         deterministic=True,
@@ -48,6 +48,6 @@ def train_ppo_model(env, eval_env):
     model.learn(total_timesteps=CONFIG["total_timesteps"], callback=eval_callback)
 
     # 7) Save
-    model.save(os.path.join(CONFIG["model_save_path"], "final_model"))
+    model.save(os.path.join('../' + CONFIG["model_save_path"], "final_model"))
 
     print("✅ Training complete. Model saved at:", CONFIG["model_save_path"])

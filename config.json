@@ -6,7 +6,7 @@
     "train_split": 0.8,
     
     "window_size": 50,
-    "initial_balance": 100.0,
+    "initial_balance": 200.0,
     
     "commission_pct": 0.001,
     "commission_fixed": 0.0,
@@ -19,7 +19,7 @@
     "stop_loss_pct": 0.02,
     "drawdown_scale_threshold": 0.1,
     "drawdown_scale_factor": 0.5,
-    "volatility_scaling": "True",
+    "volatility_scaling": true,
 
     "max_leverage": 2.0,
     "maintenance_margin": 0.25,
@@ -29,11 +29,11 @@
     "dd_penalty_coeff": 0.0,
     "turnover_penalty_coeff": 0.0,
 
-    "normalize_observations": "True",
-    "random_start": "True",
-    "episode_length": "None",
+    "normalize_observations": true,
+    "random_start": true,
+    "episode_length": null,
 
-    "total_timesteps": "300_000",
+    "total_timesteps": 300000,
 
     "tensorboard_log_dir": "saved_models/ppo/tb_logs",
     "model_save_path": "saved_models/ppo_trader_model/final_model.zip"

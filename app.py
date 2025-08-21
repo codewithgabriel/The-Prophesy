@@ -3,12 +3,15 @@ import pandas as pd
 import numpy as np
 import time
 from datetime import datetime
-from envs.config import CONFIG
 from brokers.broker_alpaca import AlpacaBroker
 from brokers.broker_ccxt import CCXTBroker
 from models.train_ppo import train_ppo_model 
 from utils import run_backtest, create_env, load_and_prepare_data, load_model, plot_equity_curve, plot_trades
 import json
+
+from json import load
+with open("config.json", "r") as f:
+    CONFIG = load(f)
 
 # Set page configuration
 st.set_page_config(

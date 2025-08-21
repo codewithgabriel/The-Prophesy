@@ -102,6 +102,11 @@ menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live T
 st.sidebar.text("Select start and end dates for data loading:")
 start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))
 end_date = st.sidebar.date_input("End Date", datetime.today())
+symbol = st.sidebar.text_input("Asset Symbol", CONFIG["asset_symbol"], help="Enter the asset symbol (e.g., BTC/USD)")
+
+if symbol:
+    CONFIG["asset_symbol"] = symbol
+
 if start_date > end_date:
     st.sidebar.error("Start date must be before end date.")
     

@@ -379,7 +379,8 @@ elif menu == "Model Training":
     # Training parameters
     n_epochs = st.slider("Number of Epochs", min_value=1, max_value=100, value=10)
     learning_rate = st.slider("Learning Rate", min_value=0.0001, max_value=0.01, value=0.001, step=0.0001, format="%.4f")
-    
+    progress_bar = st.progress(0)
+    status_text = st.empty()
     if st.button("Start Training"):
         # Actual training would happen here
         try:

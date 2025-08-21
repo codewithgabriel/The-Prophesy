@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 from utils import load_model, load_and_prepare_data, create_env, run_backtest
-from config import CONFIG
+from envs.config import CONFIG
 
 st.set_page_config(page_title="RL Trading Dashboard", layout="wide")
 

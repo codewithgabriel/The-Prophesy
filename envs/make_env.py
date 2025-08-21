@@ -1,6 +1,6 @@
 from envs.trading_env import TradingEnv
 import pandas as pd
-from envs.config import CONFIG , TEST_CONFIG
+from envs.config import CONFIG 
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 def make_env(df, train_mode=True):

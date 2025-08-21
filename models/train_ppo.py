@@ -14,11 +14,11 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 
 from json import load
-with open("../config.json", "r") as f:
+with open("config.json", "r") as f:
     CONFIG = load(f)
 
 
-
+print(CONFIG)
 
 # ========================
 # MAIN TRAINING LOGIC

@@ -2,7 +2,7 @@ from envs.trading_env import TradingEnv
 import pandas as pd
 from stable_baselines3.common.vec_env import DummyVecEnv
 from json import load
-with open("../config.json", "r") as f:
+with open("config.json", "r") as f:
     CONFIG = load(f)
 
 def make_env(df, train_mode=True):

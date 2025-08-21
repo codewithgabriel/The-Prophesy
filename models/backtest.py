@@ -8,7 +8,7 @@ from evaluate import sharpe_ratio, max_drawdown, CAGR, compute_returns
 from envs.trading_env import TradingEnv
 
 from json import load
-with open("../config.json", "r") as f:
+with open("config.json", "r") as f:
     CONFIG = load(f)
 
 

@@ -155,7 +155,7 @@ def plot_trades(df, trades, max_trades=100):
         row_heights=[0.7, 0.3],
         shared_xaxes=True
     )
-    
+
     # Price chart
     fig.add_trace(
         go.Candlestick(
@@ -170,26 +170,23 @@ def plot_trades(df, trades, max_trades=100):
         ),
         row=1, col=1
     )
-    
+
     # Limit number of trades to render
     trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
-    
-    buy_dates = []
-    buy_prices = []
-    sell_dates = []
-    sell_prices = []
-    
+
+    buy_dates, buy_prices, sell_dates, sell_prices = [], [], [], []
+
     for t in trades_to_plot:
         trade_time = df.loc[t["index"], "Date"]
-        trade_price = df.loc[t["index"], "Close"]
-        
-        if t["position_shares"] > 0:  # Buy
+        trade_price = t.get("exec_price", df.loc[t["index"], "Close"])
+
+        if t.get("side", "").lower() == "buy":
             buy_dates.append(trade_time)
             buy_prices.append(trade_price)
-        else:  # Sell
+        elif t.get("side", "").lower() == "sell":
             sell_dates.append(trade_time)
             sell_prices.append(trade_price)
-    
+
     # Add buy markers
     if buy_dates:
         fig.add_trace(
@@ -203,7 +200,7 @@ def plot_trades(df, trades, max_trades=100):
             ),
             row=1, col=1
         )
-    
+
     # Add sell markers
     if sell_dates:
         fig.add_trace(
@@ -217,7 +214,7 @@ def plot_trades(df, trades, max_trades=100):
             ),
             row=1, col=1
         )
-    
+
     # Volume chart
     fig.add_trace(
         go.Bar(
@@ -229,8 +226,8 @@ def plot_trades(df, trades, max_trades=100):
         ),
         row=2, col=1
     )
-    
-    # Update layout
+
+    # Layout
     fig.update_layout(
         height=800,
         showlegend=True,
@@ -240,9 +237,9 @@ def plot_trades(df, trades, max_trades=100):
         margin=dict(l=50, r=50, t=50, b=50),
         xaxis_rangeslider_visible=False
     )
-    
+
     fig.update_yaxes(title_text="Price ($)", row=1, col=1)
     fig.update_yaxes(title_text="Volume", row=2, col=1)
     fig.update_xaxes(title_text="Date", row=2, col=1)
-    
+
     return fig

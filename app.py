@@ -265,33 +265,42 @@ elif menu == "Backtest":
     max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=5000, value=200, step=1)
     
     # Display backtest results if available
+    # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
         _, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
-        
+
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])
-        
+
         with tab1:
             st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
-        
+
         with tab2:
             st.plotly_chart(plot_trades(test_df, trades, max_trades=max_trades), use_container_width=True)
-        
+
         with tab3:
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.metric("Initial Balance", f"${CONFIG['initial_balance']:,.2f}")
                 st.metric("Final Balance", f"${networth[-1]:,.2f}")
                 returns = (networth[-1] - CONFIG['initial_balance']) / CONFIG['initial_balance'] * 100
                 st.metric("Total Return", f"{returns:.2f}%")
-            
+
             with col2:
                 st.metric("Number of Trades", len(trades))
-                winning_trades = len([t for t in trades if t.get('profit', 0) > 0])
-                st.metric("Winning Trades", f"{winning_trades} ({winning_trades/len(trades)*100:.2f}%)" if trades else "0")
-                st.metric("Max Drawdown", f"{((min(networth) - CONFIG['initial_balance']) / CONFIG['initial_balance'] * 100):.2f}%")
+
+                # Use realized_pnl if available, else 0
+                winning_trades = len([t for t in trades if t.get("realized_pnl", 0) > 0])
+                win_rate = (winning_trades / len(trades) * 100) if trades else 0
+                st.metric("Winning Trades", f"{winning_trades} ({win_rate:.2f}%)")
+
+                # Drawdown relative to peak
+                running_max = np.maximum.accumulate(networth)
+                drawdowns = (running_max - networth) / running_max
+                max_dd = np.max(drawdowns) * 100 if len(drawdowns) > 0 else 0
+                st.metric("Max Drawdown", f"{max_dd:.2f}%")
 
 # Live Trading view
 elif menu == "Live Trading":

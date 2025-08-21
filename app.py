@@ -368,6 +368,8 @@ elif menu == "Live Trading":
         st.session_state.live_trading_active = False
         st.warning("Live trading stopped.")
 
+
+
 # Model Training view
 elif menu == "Model Training":
     st.header("🤖 Model Training")

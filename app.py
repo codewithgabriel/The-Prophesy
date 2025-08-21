@@ -137,7 +137,7 @@ if menu == "Dashboard":
     with col4:
         
         winning_trades = len([t for t in st.session_state.trade_decisions if t.get("realized_pnl", 0) > 0])
-        win_rate = (winning_trades / len(st.session_state.trade_decisions) * 100) if trades else 0
+        win_rate = (winning_trades / len(st.session_state.trade_decisions) * 100) if st.session_state.trade_decisions else 0
         st.metric("Win Rate", f"{win_rate:.2f}%")
         
     

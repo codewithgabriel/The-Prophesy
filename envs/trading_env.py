@@ -259,8 +259,22 @@ class TradingEnv(gym.Env):
 
         executed_notional, commission = self._execute_target_exposure(target_frac, price, avg_volume)
 
+        # Calculate profit only for closed trades (when position changes)
+        if self.trades:
+            prev_shares = self.trades[-1]["position_shares"]
+        else:
+            prev_shares = 0.0
+
+        # If position changed, calculate realized profit for closed portion
+        realized_profit = 0.0
+        if abs(prev_shares) > abs(self.position_shares):
+            closed_shares = prev_shares - self.position_shares
+            closed_price = price
+            entry_price = self.exec_price
+            realized_profit = closed_shares * (closed_price - entry_price)
+        else:
+            realized_profit = 0.0
         
-        profit = (price - self.exec_price) * self.position_shares
         
         if abs(executed_notional) > 0:
             self.trades.append({
@@ -268,7 +282,7 @@ class TradingEnv(gym.Env):
                 "notional": float(executed_notional),
                 "commission": float(commission),
                 "position_shares": float(self.position_shares),
-                "profit": float(profit),
+                "profit": float(realized_profit),
             })
 
         position_value = self.position_shares * price

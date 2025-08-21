@@ -1,0 +1,40 @@
+{
+    "asset_symbol": "AAPL",
+    "csv_path": "dataset/aapl.csv",
+    "start_date": "2015-01-01",
+    "end_date": "2023-01-01",
+    "train_split": 0.8,
+    
+    "window_size": 50,
+    "initial_balance": 100.0,
+    
+    "commission_pct": 0.001,
+    "commission_fixed": 0.0,
+    "spread_pct": 0.0001,
+    "slippage_coeff": 0.0002,
+    "volume_limit": 0.1,
+
+    "max_position_size": 10000,
+    "max_risk_per_trade": 0.02,
+    "stop_loss_pct": 0.02,
+    "drawdown_scale_threshold": 0.1,
+    "drawdown_scale_factor": 0.5,
+    "volatility_scaling": "True",
+
+    "max_leverage": 2.0,
+    "maintenance_margin": 0.25,
+    
+    "financing_rate_annual": 0.02,
+    "reward_scaling": 1.0,
+    "dd_penalty_coeff": 0.0,
+    "turnover_penalty_coeff": 0.0,
+
+    "normalize_observations": "True",
+    "random_start": "True",
+    "episode_length": "None",
+
+    "total_timesteps": "300_000",
+
+    "tensorboard_log_dir": "saved_models/ppo/tb_logs",
+    "model_save_path": "saved_models/ppo_trader_model/final_model.zip"
+}

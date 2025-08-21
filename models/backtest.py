@@ -6,7 +6,11 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 from technical_analysis import add_technical_indicators
 from evaluate import sharpe_ratio, max_drawdown, CAGR, compute_returns
 from envs.trading_env import TradingEnv
-from envs.config import CONFIG
+
+from json import load
+with open("../config.json", "r") as f:
+    CONFIG = load(f)
+
 
 
 def make_eval_env(test_df, window_size=50):

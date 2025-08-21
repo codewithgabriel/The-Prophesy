@@ -12,7 +12,11 @@ Includes:
 import os
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
-from envs.config import CONFIG
+
+from json import load
+with open("../config.json", "r") as f:
+    CONFIG = load(f)
+
 
 
 

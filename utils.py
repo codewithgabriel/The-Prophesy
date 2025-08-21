@@ -2,7 +2,6 @@
 # 📂 utils.py (Enhanced)
 # ================================================
 import pandas as pd
-from envs.config import CONFIG
 from technical_analysis import add_technical_indicators
 import os
 from data_fetcher import download_price_data
@@ -12,6 +11,9 @@ from stable_baselines3 import PPO
 from envs.make_env import make_env
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from json import load
+with open("config.json", "r") as f:
+    CONFIG = load(f)
 
 def load_model():
     return PPO.load(CONFIG['model_save_path'])

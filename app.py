@@ -98,6 +98,7 @@ if 'model' not in st.session_state:
     st.session_state.model = None
 
 # Sidebar menu
+
 menu = st.sidebar.radio("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
 symbol = st.sidebar.text_input("Asset Symbol", CONFIG["asset_symbol"], help="Enter the asset symbol (e.g., BTC/USD)")

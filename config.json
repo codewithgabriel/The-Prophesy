@@ -36,5 +36,6 @@
     "total_timesteps": 300000,
 
     "tensorboard_log_dir": "saved_models/ppo/tb_logs",
-    "model_save_path": "saved_models/ppo_trader_model/final_model.zip"
+    "model_save_path": "saved_models/ppo_trader_model/final_model.zip",
+    "timeframe": "1d"
 }

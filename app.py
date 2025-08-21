@@ -212,10 +212,12 @@ elif menu == "Backtest":
                 model = train_ppo_model(env, eval_env)
                 st.session_state.training_status = "Training completed successfully!"
                 st.success("Model trained and saved!")
+                
             except Exception as e:
                 st.session_state.training_status = f"Training failed: {str(e)}"
                 st.error(f"Training error: {str(e)}")
             
+            col1.write(test_df.head())  # Display first few rows of test data
             progress_bar.empty()
             status_text.empty()
     

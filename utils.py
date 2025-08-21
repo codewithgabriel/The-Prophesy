@@ -93,50 +93,141 @@ def plot_trades(df, trades, max_trades=100):
                   row=1, col=1)
 
     trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
+    print(f"Number of trades to plot: {len(trades_to_plot)}")
+    print(f"Sample trade: {trades_to_plot[0] if trades_to_plot else 'No trades'}")
     
     buys, sells = ([], []), ([], [])
-    for t in trades_to_plot:
+    for i, t in enumerate(trades_to_plot):
         try:
-            # Try to find the trade date by matching the timestamp
+            print(f"Processing trade {i}: {t}")
+            
+            # Check what keys are available in the trade dictionary
+            print(f"Trade keys: {list(t.keys())}")
+            
+            # Try different approaches to get trade time and price
+            trade_time = None
+            trade_price = None
+            
+            # Method 1: Use timestamp if available
             if "timestamp" in t:
                 trade_time = pd.to_datetime(t["timestamp"])
                 # Find the closest date in the dataframe
                 time_diff = abs(df["Date"] - trade_time)
                 closest_idx = time_diff.idxmin()
                 trade_price = df.loc[closest_idx, "Close"]
-            elif "index" in t:
-                # Use the index if it exists and is valid
-                if t["index"] < len(df):
-                    trade_time = df.loc[t["index"], "Date"]
-                    trade_price = df.loc[t["index"], "Close"]
-                else:
-                    continue  # Skip invalid index
+                print(f"Using timestamp method: {trade_time}, {trade_price}")
+            
+            # Method 2: Use index if available and valid
+            elif "index" in t and t["index"] < len(df):
+                trade_time = df.loc[t["index"], "Date"]
+                trade_price = df.loc[t["index"], "Close"]
+                print(f"Using index method: {trade_time}, {trade_price}")
+            
+            # Method 3: Use step if available (common in RL trading environments)
+            elif "step" in t and t["step"] < len(df):
+                trade_time = df.loc[t["step"], "Date"]
+                trade_price = df.loc[t["step"], "Close"]
+                print(f"Using step method: {trade_time}, {trade_price}")
+            
+            # Method 4: If we have a date directly
+            elif "date" in t:
+                trade_time = pd.to_datetime(t["date"])
+                # Find closest match
+                time_diff = abs(df["Date"] - trade_time)
+                closest_idx = time_diff.idxmin()
+                trade_price = df.loc[closest_idx, "Close"]
+                print(f"Using date method: {trade_time}, {trade_price}")
+            
+            if trade_time is None or trade_price is None:
+                print(f"Skipping trade {i} - could not determine time/price")
+                continue
+            
+            # Determine trade direction
+            position_shares = t.get("position_shares", 0)
+            action = t.get("action", "")
+            order_type = t.get("type", "")
+            
+            print(f"Trade details - position_shares: {position_shares}, action: {action}, order_type: {order_type}")
+            
+            # Determine if it's a buy or sell
+            is_buy = (position_shares > 0 or 
+                     action in ["buy", "long", "BUY", "LONG"] or
+                     order_type in ["buy", "long"])
+            
+            is_sell = (position_shares < 0 or 
+                      action in ["sell", "short", "SELL", "SHORT"] or
+                      order_type in ["sell", "short"])
+            
+            if is_buy:
+                buys[0].append(trade_time)
+                buys[1].append(trade_price)
+                print(f"Added BUY at {trade_time}, price {trade_price}")
+            elif is_sell:
+                sells[0].append(trade_time)
+                sells[1].append(trade_price)
+                print(f"Added SELL at {trade_time}, price {trade_price}")
             else:
-                continue  # Skip trades without timestamp or index
+                print(f"Trade {i} is neither buy nor sell")
                 
-            if t.get("position_shares", 0) > 0:
-                buys[0].append(trade_time); buys[1].append(trade_price)
-            elif t.get("position_shares", 0) < 0:
-                sells[0].append(trade_time); sells[1].append(trade_price)
-        except (KeyError, ValueError, IndexError):
-            continue  # Skip any trades that cause errors
+        except Exception as e:
+            print(f"Error processing trade {i}: {e}")
+            continue
 
+    print(f"Total BUY trades: {len(buys[0])}")
+    print(f"Total SELL trades: {len(sells[0])}")
+
+    # Add buy markers
     if buys[0]:
-        fig.add_trace(go.Scatter(x=buys[0], y=buys[1], mode="markers",
-                                 marker=dict(color="#00C853", size=10, symbol="triangle-up",
-                                             line=dict(width=2, color="DarkGreen")),
-                                 name="Buy"), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=buys[0], 
+            y=buys[1], 
+            mode="markers",
+            marker=dict(
+                color="#00C853", 
+                size=12, 
+                symbol="triangle-up",
+                line=dict(width=2, color="DarkGreen")
+            ),
+            name="Buy",
+            hovertemplate='<b>BUY</b><br>Time: %{x}<br>Price: $%{y:.2f}<extra></extra>'
+        ), row=1, col=1)
+    
+    # Add sell markers
     if sells[0]:
-        fig.add_trace(go.Scatter(x=sells[0], y=sells[1], mode="markers",
-                                 marker=dict(color="#FF5252", size=10, symbol="triangle-down",
-                                             line=dict(width=2, color="DarkRed")),
-                                 name="Sell"), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=sells[0], 
+            y=sells[1], 
+            mode="markers",
+            marker=dict(
+                color="#FF5252", 
+                size=12, 
+                symbol="triangle-down",
+                line=dict(width=2, color="DarkRed")
+            ),
+            name="Sell",
+            hovertemplate='<b>SELL</b><br>Time: %{x}<br>Price: $%{y:.2f}<extra></extra>'
+        ), row=1, col=1)
 
-    fig.add_trace(go.Bar(x=df["Date"], y=df["Volume"], name="Volume", marker_color='#546E7A', opacity=0.5), row=2, col=1)
-    fig.update_layout(height=800, showlegend=True, plot_bgcolor='rgba(0,0,0,0)',
-                      paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#2c3e50'),
-                      margin=dict(l=50, r=50, t=50, b=50), xaxis_rangeslider_visible=False)
+    # Add volume
+    fig.add_trace(go.Bar(
+        x=df["Date"], 
+        y=df["Volume"], 
+        name="Volume", 
+        marker_color='#546E7A', 
+        opacity=0.5
+    ), row=2, col=1)
+    
+    fig.update_layout(
+        height=800, 
+        showlegend=True, 
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)', 
+        font=dict(color='#2c3e50'),
+        margin=dict(l=50, r=50, t=50, b=50), 
+        xaxis_rangeslider_visible=False
+    )
     fig.update_yaxes(title_text="Price ($)", row=1, col=1)
     fig.update_yaxes(title_text="Volume", row=2, col=1)
     fig.update_xaxes(title_text="Date", row=2, col=1)
+    
     return fig

@@ -98,11 +98,14 @@ if 'balance_history' not in st.session_state:
 # Sidebar menu
 
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
-st.text("Select Start and End Date")
 
-# Use start and end date as global variables
-START_DATE = st.session_state.get("start_date", datetime(2023, 1, 1))
-END_DATE = st.session_state.get("end_date", datetime.today())
+
+
+st.sidebar.text("Select Start and End Date")
+
+st.sidebar.markdown("### Date Range")
+start_date = st.sidebar.date_input("Start Date", value=datetime(2023, 1 , 1))
+end_date = st.sidebar.date_input("End Date", value=datetime.today())
 
 def get_data_with_dates():
     return load_and_prepare_data(start_date=START_DATE, end_date=END_DATE)

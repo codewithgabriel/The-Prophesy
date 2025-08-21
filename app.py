@@ -374,7 +374,7 @@ elif menu == "Live Trading":
 elif menu == "Model Training":
     st.header("🤖 Model Training")
     
-    st.info("Configure your model training parameters below.")
+    st.info("Retrain Model, you can set the env config below")
     
     progress_bar = st.progress(0)
     status_text = st.empty()

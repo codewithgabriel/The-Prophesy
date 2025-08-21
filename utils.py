@@ -92,7 +92,7 @@ def plot_trades(df, trades, max_trades=100):
                   row=1, col=1)
 
     trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
-    
+    print(trades_to_plot[:3])
     buys, sells = ([], []), ([], [])
     for t in trades_to_plot:
         trade_time = df.loc[t["index"], "Date"]

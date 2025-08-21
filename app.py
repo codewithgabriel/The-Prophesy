@@ -382,9 +382,11 @@ elif menu == "Model Training":
         try:
             progress_bar.progress(10)
             train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+            status_text.text("Data loaded successfully. Creating environments...")
             progress_bar.progress(30)
             env, eval_env = create_env(train_df, test_df)
             progress_bar.progress(50)
+            status_text.text("Environments created successfully. Training model...")
             model = train_ppo_model(env, eval_env)
             st.session_state.model = model
             st.success("Model trained and saved successfully!")

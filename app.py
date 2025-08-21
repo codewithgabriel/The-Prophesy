@@ -187,7 +187,6 @@ if menu == "Dashboard":
 # Backtest view
 elif menu == "Backtest":
     st.header("🔁 Backtesting")
-    
     col1 = st.sidebar.columns(1)
     with col1:
         if st.button("Backtest model", use_container_width=True):

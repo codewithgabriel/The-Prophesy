@@ -1,16 +1,18 @@
 # ================================================
-# 📂 trading_app/main.py (Fixed)
+# 📂 trading_app/main.py (Enhanced with Real-time and Date Selection)
 # ================================================
 import streamlit as st
 import pandas as pd
 import numpy as np
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from envs.config import CONFIG
 from brokers.broker_alpaca import AlpacaBroker
 from brokers.broker_ccxt import CCXTBroker
 from models.train_ppo import train_ppo_model 
 from utils import run_backtest, create_env, load_and_prepare_data, load_model, plot_equity_curve, plot_trades
+import threading
+import queue
 
 # Set page configuration
 st.set_page_config(
@@ -75,6 +77,22 @@ st.markdown("""
         height: 30px;
         background-color: #000;
     }
+    .decision-panel {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #1E88E5;
+    }
+    .decision-buy {
+        border-left-color: #00C853;
+    }
+    .decision-sell {
+        border-left-color: #FF5252;
+    }
+    .decision-hold {
+        border-left-color: #FFC107;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -94,13 +112,131 @@ if 'current_balance' not in st.session_state:
     st.session_state.current_balance = CONFIG["initial_balance"]
 if 'balance_history' not in st.session_state:
     st.session_state.balance_history = []
+if 'real_time_updates' not in st.session_state:
+    st.session_state.real_time_updates = queue.Queue()
+if 'is_running' not in st.session_state:
+    st.session_state.is_running = False
+if 'backtest_dates' not in st.session_state:
+    st.session_state.backtest_dates = {
+        "start_date": datetime.now() - timedelta(days=365),
+        "end_date": datetime.now()
+    }
 
 # Sidebar menu
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
+# Function to run backtest in a separate thread
+def run_backtest_thread(model, test_df, progress_bar, status_text):
+    try:
+        # Run backtest with progress updates
+        networth, trades = run_backtest(model, test_df)
+        
+        # Store results in session state
+        st.session_state.backtest_results = (networth, trades)
+        st.session_state.trade_decisions = trades
+        
+        # Update balance history
+        st.session_state.balance_history = networth.tolist()
+        st.session_state.current_balance = networth[-1] if len(networth) > 0 else CONFIG["initial_balance"]
+        
+        progress_bar.progress(100)
+        status_text.text("Backtest completed!")
+        time.sleep(1)
+        
+    except Exception as e:
+        st.session_state.real_time_updates.put(f"Error: {str(e)}")
+
+# Function to simulate real-time trading
+def simulate_real_time_trading(model, test_df, update_interval=0.5):
+    env = make_eval_env(test_df, 50)  # Assuming window_size=50
+    obs = env.reset()
+    done = [False]
+    
+    while not done[0] and st.session_state.is_running:
+        action, _states = model.predict(obs, deterministic=True)
+        obs, rewards, done, info = env.step(action)
+        
+        # Get current state information
+        current_step = info[0]['current_step']
+        total_steps = info[0]['total_steps']
+        net_worth = info[0]['net_worth']
+        position = info[0]['position']
+        
+        # Determine action type
+        action_type = "HOLD"
+        if action == 0:
+            action_type = "BUY"
+        elif action == 1:
+            action_type = "SELL"
+        
+        # Create update message
+        update_msg = {
+            "type": "decision",
+            "step": current_step,
+            "total_steps": total_steps,
+            "action": action_type,
+            "net_worth": net_worth,
+            "position": position,
+            "price": test_df.iloc[current_step]["Close"] if current_step < len(test_df) else 0,
+            "timestamp": test_df.iloc[current_step]["Date"] if current_step < len(test_df) else datetime.now()
+        }
+        
+        # Add to queue
+        st.session_state.real_time_updates.put(update_msg)
+        
+        # Update session state
+        st.session_state.current_balance = net_worth
+        st.session_state.balance_history.append(net_worth)
+        
+        # Add to trade decisions if it's a buy or sell
+        if action_type in ["BUY", "SELL"]:
+            trade_record = {
+                "timestamp": update_msg["timestamp"],
+                "action": action_type,
+                "price": update_msg["price"],
+                "shares": position,
+                "net_worth": net_worth
+            }
+            st.session_state.trade_decisions.append(trade_record)
+        
+        time.sleep(update_interval)
+    
+    st.session_state.is_running = False
+
 # Dashboard view
 if menu == "Dashboard":
     st.header("📊 Trading Dashboard")
+    
+    # Display real-time updates if available
+    if not st.session_state.real_time_updates.empty():
+        st.subheader("Real-time Updates")
+        update_placeholder = st.empty()
+        
+        updates = []
+        while not st.session_state.real_time_updates.empty():
+            updates.append(st.session_state.real_time_updates.get())
+        
+        for update in updates[-5:]:  # Show last 5 updates
+            if isinstance(update, dict) and update.get("type") == "decision":
+                action_class = ""
+                if update["action"] == "BUY":
+                    action_class = "decision-buy"
+                elif update["action"] == "SELL":
+                    action_class = "decision-sell"
+                else:
+                    action_class = "decision-hold"
+                
+                st.markdown(f"""
+                <div class="decision-panel {action_class}">
+                    <strong>{update['timestamp']}</strong> - 
+                    <span class="{'positive-value' if update['action'] == 'BUY' else 'negative-value' if update['action'] == 'SELL' else ''}">
+                        {update['action']}
+                    </span> at ${update['price']:.2f}
+                    <br>Net Worth: ${update['net_worth']:.2f} | Position: {update['position']} shares
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.info(update)
     
     # Create columns for metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -156,15 +292,9 @@ if menu == "Dashboard":
             except:
                 pass  # If timestamp conversion fails, keep original
         
-        # Check if position_shares column exists to determine trade direction
-        if 'position_shares' in display_df.columns:
-            # Add action column based on position_shares
-            display_df['action'] = display_df['position_shares'].apply(
-                lambda x: 'BUY' if x > 0 else 'SELL' if x < 0 else 'HOLD'
-            )
-        
-        # Apply styling based on trade action if action column exists
+        # Check if action column exists to determine trade direction
         if 'action' in display_df.columns:
+            # Apply styling based on trade action
             def color_trade_rows(row):
                 if row['action'] == 'BUY':
                     return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
@@ -183,12 +313,33 @@ if menu == "Dashboard":
 elif menu == "Backtest":
     st.header("🔁 Backtesting")
     
+    # Date selection for backtest
+    st.sidebar.subheader("Backtest Date Range")
+    start_date = st.sidebar.date_input(
+        "Start Date", 
+        value=st.session_state.backtest_dates["start_date"],
+        max_value=datetime.now()
+    )
+    end_date = st.sidebar.date_input(
+        "End Date", 
+        value=st.session_state.backtest_dates["end_date"],
+        max_value=datetime.now()
+    )
+    
+    # Update session state with selected dates
+    st.session_state.backtest_dates["start_date"] = start_date
+    st.session_state.backtest_dates["end_date"] = end_date
+    
     col1, col2 = st.sidebar.columns(2)
     with col1:
         if st.button("Train Model", use_container_width=True):
             st.session_state.training_status = "Training in progress..."
             progress_bar = st.progress(0)
             status_text = st.empty()
+            
+            # Update config with selected dates
+            CONFIG["start_date"] = start_date.strftime("%Y-%m-%d")
+            CONFIG["end_date"] = end_date.strftime("%Y-%m-%d")
             
             # Simulate training progress
             for i in range(100):
@@ -216,26 +367,41 @@ elif menu == "Backtest":
             status_text.empty()
     
     with col2:
-        if st.button("Load Model", use_container_width=True):
+        if st.button("Run Backtest", use_container_width=True):
             try:
                 model = load_model()
+                
+                # Update config with selected dates
+                CONFIG["start_date"] = start_date.strftime("%Y-%m-%d")
+                CONFIG["end_date"] = end_date.strftime("%Y-%m-%d")
+                
                 train_df, test_df = load_and_prepare_data()
-                _, eval_env = create_env(train_df, test_df)
                 
                 # Initialize progress for backtest
                 backtest_progress = st.progress(0)
                 backtest_status = st.empty()
                 
-                # Run backtest with progress updates
-                networth, trades = run_backtest(model, test_df)
+                # Run backtest in a separate thread to allow real-time updates
+                st.session_state.is_running = True
+                thread = threading.Thread(
+                    target=simulate_real_time_trading, 
+                    args=(model, test_df, 0.5)
+                )
+                thread.daemon = True
+                thread.start()
                 
-                # Store results in session state
-                st.session_state.backtest_results = (networth, trades)
-                st.session_state.trade_decisions = trades
-                
-                # Update balance history
-                st.session_state.balance_history = networth.tolist()
-                st.session_state.current_balance = networth[-1] if len(networth) > 0 else CONFIG["initial_balance"]
+                # Display progress
+                progress_placeholder = st.empty()
+                while st.session_state.is_running:
+                    if not st.session_state.real_time_updates.empty():
+                        update = st.session_state.real_time_updates.get()
+                        if isinstance(update, dict) and update.get("type") == "decision":
+                            progress = (update["step"] / update["total_steps"]) * 100
+                            backtest_progress.progress(progress)
+                            backtest_status.text(f"Step {update['step']}/{update['total_steps']} - {update['action']} at ${update['price']:.2f}")
+                    
+                    time.sleep(0.1)
+                    st.rerun()
                 
                 backtest_progress.progress(100)
                 backtest_status.text("Backtest completed!")
@@ -244,7 +410,6 @@ elif menu == "Backtest":
                 backtest_status.empty()
                 
                 st.success("Backtest completed successfully!")
-                st.rerun()
                 
             except Exception as e:
                 st.error(f"Error loading model or running backtest: {str(e)}")
@@ -263,7 +428,6 @@ elif menu == "Backtest":
     # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
-        train_df, test_df = load_and_prepare_data()
         
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])
@@ -272,6 +436,7 @@ elif menu == "Backtest":
             st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
         
         with tab2:
+            train_df, test_df = load_and_prepare_data()
             st.plotly_chart(plot_trades(test_df, trades, max_trades=max_trades), use_container_width=True)
         
         with tab3:
@@ -321,12 +486,35 @@ elif menu == "Live Trading":
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Trading Controls")
     
-    if st.sidebar.button("Start Live Trading"):
-        st.info("Live trading started. Monitoring market...")
-        # Here you would implement the actual live trading logic
-        
-    if st.sidebar.button("Stop Live Trading"):
-        st.warning("Live trading stopped.")
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        if st.button("Start Live Trading", use_container_width=True):
+            try:
+                model = load_model()
+                # Get recent data for live trading
+                recent_end_date = datetime.now()
+                recent_start_date = recent_end_date - timedelta(days=30)
+                CONFIG["start_date"] = recent_start_date.strftime("%Y-%m-%d")
+                CONFIG["end_date"] = recent_end_date.strftime("%Y-%m-%d")
+                
+                train_df, test_df = load_and_prepare_data()
+                
+                st.session_state.is_running = True
+                thread = threading.Thread(
+                    target=simulate_real_time_trading, 
+                    args=(model, test_df, 2)  # Longer interval for live trading
+                )
+                thread.daemon = True
+                thread.start()
+                
+                st.info("Live trading started. Monitoring market...")
+            except Exception as e:
+                st.error(f"Error starting live trading: {str(e)}")
+    
+    with col2:
+        if st.button("Stop Trading", use_container_width=True):
+            st.session_state.is_running = False
+            st.warning("Trading stopped.")
 
 # Model Training view
 elif menu == "Model Training":
@@ -345,7 +533,24 @@ elif menu == "Model Training":
             batch_size = st.slider("Batch Size", 8, 256, 64, 8)
             n_epochs = st.slider("Epochs", 1, 20, 10, 1)
     
+    # Date selection for training
+    st.sidebar.subheader("Training Date Range")
+    train_start_date = st.sidebar.date_input(
+        "Training Start Date", 
+        value=datetime.now() - timedelta(days=365),
+        max_value=datetime.now()
+    )
+    train_end_date = st.sidebar.date_input(
+        "Training End Date", 
+        value=datetime.now(),
+        max_value=datetime.now()
+    )
+    
     if st.button("Start Training"):
+        # Update config with selected dates
+        CONFIG["start_date"] = train_start_date.strftime("%Y-%m-%d")
+        CONFIG["end_date"] = train_end_date.strftime("%Y-%m-%d")
+        
         st.session_state.training_status = "Training in progress..."
         progress_bar = st.progress(0)
         status_text = st.empty()
@@ -380,3 +585,8 @@ elif menu == "Model Training":
         status_text.empty()
         st.session_state.training_status = "Training completed successfully!"
         st.success("Model training completed!")
+
+# Auto-refresh the page when real-time trading is active
+if st.session_state.is_running:
+    time.sleep(1)
+    st.rerun()

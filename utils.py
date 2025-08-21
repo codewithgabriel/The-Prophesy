@@ -73,7 +73,6 @@ def load_and_prepare_data():
     split_idx = int(len(df) * CONFIG["train_split"])
     train_df = df.iloc[:split_idx].reset_index(drop=True)
     test_df = df.iloc[split_idx:].reset_index(drop=True)
-
     return train_df, test_df
 
 def create_env(train_df, test_df):

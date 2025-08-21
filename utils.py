@@ -93,15 +93,33 @@ def plot_trades(df, trades, max_trades=100):
                   row=1, col=1)
 
     trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
-    print(trades_to_plot[:3])
+    
     buys, sells = ([], []), ([], [])
     for t in trades_to_plot:
-        trade_time = df.loc[t["index"], "Date"]
-        trade_price = df.loc[t["index"], "Close"]
-        if t["position_shares"] > 0:
-            buys[0].append(trade_time); buys[1].append(trade_price)
-        else:
-            sells[0].append(trade_time); sells[1].append(trade_price)
+        try:
+            # Try to find the trade date by matching the timestamp
+            if "timestamp" in t:
+                trade_time = pd.to_datetime(t["timestamp"])
+                # Find the closest date in the dataframe
+                time_diff = abs(df["Date"] - trade_time)
+                closest_idx = time_diff.idxmin()
+                trade_price = df.loc[closest_idx, "Close"]
+            elif "index" in t:
+                # Use the index if it exists and is valid
+                if t["index"] < len(df):
+                    trade_time = df.loc[t["index"], "Date"]
+                    trade_price = df.loc[t["index"], "Close"]
+                else:
+                    continue  # Skip invalid index
+            else:
+                continue  # Skip trades without timestamp or index
+                
+            if t.get("position_shares", 0) > 0:
+                buys[0].append(trade_time); buys[1].append(trade_price)
+            elif t.get("position_shares", 0) < 0:
+                sells[0].append(trade_time); sells[1].append(trade_price)
+        except (KeyError, ValueError, IndexError):
+            continue  # Skip any trades that cause errors
 
     if buys[0]:
         fig.add_trace(go.Scatter(x=buys[0], y=buys[1], mode="markers",

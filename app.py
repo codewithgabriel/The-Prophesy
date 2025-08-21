@@ -96,16 +96,15 @@ if 'balance_history' not in st.session_state:
     st.session_state.balance_history = []
 
 # Sidebar menu
+st.sidebar.text("Select Start and End Date")
+st.sidebar.markdown("### Date Range")
+start_date = st.sidebar.date_input("Start Date", value=datetime(2023, 1 , 1))
+end_date = st.sidebar.date_input("End Date", value=datetime.today())
 
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
 
 
-st.sidebar.text("Select Start and End Date")
-
-st.sidebar.markdown("### Date Range")
-start_date = st.sidebar.date_input("Start Date", value=datetime(2023, 1 , 1))
-end_date = st.sidebar.date_input("End Date", value=datetime.today())
 
 def get_data_with_dates():
     return load_and_prepare_data(start_date=START_DATE, end_date=END_DATE)
@@ -240,7 +239,7 @@ elif menu == "Backtest":
                 
                 # Run backtest with progress updates
                 networth, trades = run_backtest(model, test_df, train_df)
-                st.write(trades)
+                col2.write(trades[:10])
                 
                 
                 # Store results in session state

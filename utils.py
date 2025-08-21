@@ -172,8 +172,8 @@ def plot_trades(df, trades, max_trades=100):
     )
 
     # Limit number of trades to render
-    trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
-
+    # trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
+    trades_to_plot = trades
     buy_dates, buy_prices, sell_dates, sell_prices = [], [], [], []
 
     for t in trades_to_plot:

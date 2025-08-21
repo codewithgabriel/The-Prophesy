@@ -29,7 +29,6 @@ def run_backtest(model, test_df, train_df):
         current_trades = getattr(env.envs[0], 'trades', [])
         if current_trades:
             trades.extend(current_trades.copy())
-
     return np.array(net_worths), trades
 
 def load_and_prepare_data(start_date=None, end_date=None):
@@ -93,6 +92,7 @@ def plot_trades(df, trades, max_trades=100):
                   row=1, col=1)
 
     trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
+    
     buys, sells = ([], []), ([], [])
     for t in trades_to_plot:
         trade_time = df.loc[t["index"], "Date"]

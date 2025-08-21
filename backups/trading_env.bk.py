@@ -1,28 +1,3 @@
-"""
-realistic_trading_env.py
-
-A more realistic single-instrument trading environment (Gymnasium-compatible)
-Designed with pragmatic best-practices for research / paper-trading simulation.
-
-Key features implemented:
-- Continuous action space: target exposure fraction in [-1, 1] (negative => short)
-- Position sizing w.r.t. net worth, supports leverage up to `max_leverage`
-- Explicit commission (percentage + fixed) and bid-ask spread
-- Simple slippage model proportional to trade size vs. recent volume
-- Partial fills limited by available market volume per step
-- Margin tracking and liquidation when maintenance margin breached
-- Overnight financing (carry) for leveraged positions
-- Observation includes normalized price/indicator window + normalized portfolio state
-- Randomized episode start (walk-forward style) and per-step time limit
-- Reward: log return of net worth per step with optional drawdown penalty and turnover penalty
-
-Notes:
-- This is still a simulator; for real deployment add micro-structure (order book, limit orders, fills based on price paths), realistic intraday volume curves, and market impact models.
-- The environment expects `df` to contain at least the following columns: ['Open','High','Low','Close','Volume'] plus any feature columns you compute beforehand.
-
-Author: ChatGPT (experienced ML/trading engineer)
-"""
-
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np

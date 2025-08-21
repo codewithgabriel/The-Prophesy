@@ -1,5 +1,5 @@
 # ================================================
-# 📂 trading_app/main.py (Enhanced)
+# 📂 trading_app/main.py (Fixed)
 # ================================================
 import streamlit as st
 import pandas as pd
@@ -148,17 +148,36 @@ if menu == "Dashboard":
         
         # Format the DataFrame for display
         display_df = recent_trades.copy()
+        
+        # Check if timestamp column exists and format it
         if 'timestamp' in display_df.columns:
-            display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+            except:
+                pass  # If timestamp conversion fails, keep original
         
-        # Apply styling based on trade action
-        def color_trade_rows(row):
-            if row['action'] == 'BUY':
-                return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
-            else:
-                return ['background-color: rgba(255, 82, 82, 0.1)'] * len(row)
+        # Check if position_shares column exists to determine trade direction
+        if 'position_shares' in display_df.columns:
+            # Add action column based on position_shares
+            display_df['action'] = display_df['position_shares'].apply(
+                lambda x: 'BUY' if x > 0 else 'SELL' if x < 0 else 'HOLD'
+            )
         
-        st.dataframe(display_df.style.apply(color_trade_rows, axis=1), use_container_width=True)
+        # Apply styling based on trade action if action column exists
+        if 'action' in display_df.columns:
+            def color_trade_rows(row):
+                if row['action'] == 'BUY':
+                    return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
+                elif row['action'] == 'SELL':
+                    return ['background-color: rgba(255, 82, 82, 0.1)'] * len(row)
+                else:
+                    return [''] * len(row)
+            
+            styled_df = display_df.style.apply(color_trade_rows, axis=1)
+        else:
+            styled_df = display_df.style
+        
+        st.dataframe(styled_df, use_container_width=True)
 
 # Backtest view
 elif menu == "Backtest":

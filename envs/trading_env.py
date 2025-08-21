@@ -180,7 +180,7 @@ class TradingEnv(gym.Env):
             return 0.0, 0.0
 
         exec_price = self._estimate_exec_price(side=side, price=price, trade_value=executed_value, avg_volume=avg_volume)
-
+        self.exec_price = exec_price
         trade_notional = executed_shares * exec_price
         commission = abs(trade_notional) * self.commission_pct + self.commission_fixed
         self.cum_fees += commission
@@ -258,12 +258,17 @@ class TradingEnv(gym.Env):
         avg_volume = self._get_avg_volume_at(self.current_index)
 
         executed_notional, commission = self._execute_target_exposure(target_frac, price, avg_volume)
+
+        
+        profit = (price - self.exec_price) * self.position_shares
+        
         if abs(executed_notional) > 0:
             self.trades.append({
                 "index": int(self.current_index),
                 "notional": float(executed_notional),
                 "commission": float(commission),
                 "position_shares": float(self.position_shares),
+                "profit": float(price),
             })
 
         position_value = self.position_shares * price

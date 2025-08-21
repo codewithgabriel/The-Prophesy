@@ -216,7 +216,7 @@ elif menu == "Backtest":
             status_text.empty()
     
     with col2:
-        if st.button("Load Model", use_container_width=True):
+        if st.button("Backtest Model", use_container_width=True):
             try:
                 model = load_model()
                 train_df, test_df = load_and_prepare_data()

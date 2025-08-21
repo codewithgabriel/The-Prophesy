@@ -1,5 +1,5 @@
 # ================================================
-# 📂 trading_app/main.py (Fixed)
+# 📂 trading_app/main.py (Enhanced)
 # ================================================
 import streamlit as st
 import pandas as pd
@@ -96,15 +96,7 @@ if 'balance_history' not in st.session_state:
     st.session_state.balance_history = []
 
 # Sidebar menu
-st.sidebar.text("Select Start and End Date")
-st.sidebar.markdown("### Date Range")
-start_date = st.sidebar.date_input("Start Date", value=datetime(2023, 1 , 1))
-end_date = st.sidebar.date_input("End Date", value=datetime.today())
-
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
-
-
-
 
 # Dashboard view
 if menu == "Dashboard":
@@ -156,36 +148,17 @@ if menu == "Dashboard":
         
         # Format the DataFrame for display
         display_df = recent_trades.copy()
-        
-        # Check if timestamp column exists and format it
         if 'timestamp' in display_df.columns:
-            try:
-                display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
-            except:
-                pass  # If timestamp conversion fails, keep original
+            display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
         
-        # Check if position_shares column exists to determine trade direction
-        if 'position_shares' in display_df.columns:
-            # Add action column based on position_shares
-            display_df['action'] = display_df['position_shares'].apply(
-                lambda x: 'BUY' if x > 0 else 'SELL' if x < 0 else 'HOLD'
-            )
+        # Apply styling based on trade action
+        def color_trade_rows(row):
+            if row['action'] == 'BUY':
+                return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
+            else:
+                return ['background-color: rgba(255, 82, 82, 0.1)'] * len(row)
         
-        # Apply styling based on trade action if action column exists
-        if 'action' in display_df.columns:
-            def color_trade_rows(row):
-                if row['action'] == 'BUY':
-                    return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
-                elif row['action'] == 'SELL':
-                    return ['background-color: rgba(255, 82, 82, 0.1)'] * len(row)
-                else:
-                    return [''] * len(row)
-            
-            styled_df = display_df.style.apply(color_trade_rows, axis=1)
-        else:
-            styled_df = display_df.style
-        
-        st.dataframe(styled_df, use_container_width=True)
+        st.dataframe(display_df.style.apply(color_trade_rows, axis=1), use_container_width=True)
 
 # Backtest view
 elif menu == "Backtest":
@@ -211,7 +184,7 @@ elif menu == "Backtest":
             
             # Actual training would happen here
             try:
-                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+                train_df, test_df = load_and_prepare_data()
                 env, eval_env = create_env(train_df, test_df)
                 model = train_ppo_model(env, eval_env)
                 st.session_state.training_status = "Training completed successfully!"
@@ -224,10 +197,10 @@ elif menu == "Backtest":
             status_text.empty()
     
     with col2:
-        if st.button("Backtest Model", use_container_width=True):
+        if st.button("Load Model", use_container_width=True):
             try:
                 model = load_model()
-                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+                train_df, test_df = load_and_prepare_data()
                 _, eval_env = create_env(train_df, test_df)
                 
                 # Initialize progress for backtest
@@ -235,9 +208,7 @@ elif menu == "Backtest":
                 backtest_status = st.empty()
                 
                 # Run backtest with progress updates
-                networth, trades = run_backtest(model, test_df, train_df)
-               
-                
+                networth, trades = run_backtest(model, test_df)
                 
                 # Store results in session state
                 st.session_state.backtest_results = (networth, trades)
@@ -273,13 +244,12 @@ elif menu == "Backtest":
     # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
-        train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+        train_df, test_df = load_and_prepare_data()
         
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])
         
         with tab1:
-           
             st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
         
         with tab2:
@@ -296,9 +266,6 @@ elif menu == "Backtest":
             
             with col2:
                 st.metric("Number of Trades", len(trades))
-               
-               
-                
                 winning_trades = len([t for t in trades if t.get('profit', 0) > 0])
                 st.metric("Winning Trades", f"{winning_trades} ({winning_trades/len(trades)*100:.2f}%)" if trades else "0")
                 st.metric("Max Drawdown", f"{((min(networth) - CONFIG['initial_balance']) / CONFIG['initial_balance'] * 100):.2f}%")

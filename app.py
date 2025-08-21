@@ -1,5 +1,5 @@
 # ================================================
-# 📂 trading_app/main.py (Enhanced)
+# 📂 trading_app/main.py (Fixed)
 # ================================================
 import streamlit as st
 import pandas as pd
@@ -95,14 +95,15 @@ if 'current_balance' not in st.session_state:
 if 'balance_history' not in st.session_state:
     st.session_state.balance_history = []
 
-st.sidebar.text("Select Start and End Dates for Data Fetching")
-start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))
-end_date = st.sidebar.date_input("End Date", datetime.today())
-if start_date > end_date:
-    st.sidebar.error("Start date must be before end date.") 
 # Sidebar menu
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
+st.sidebar.text("Select start and end dates for data loading:")
+start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))
+end_date = st.sidebar.date_input("End Date", datetime.today())
+if start_date > end_date:
+    st.sidebar.error("Start date must be before end date.")
+    
 # Dashboard view
 if menu == "Dashboard":
     st.header("📊 Trading Dashboard")
@@ -153,17 +154,36 @@ if menu == "Dashboard":
         
         # Format the DataFrame for display
         display_df = recent_trades.copy()
+        
+        # Check if timestamp column exists and format it
         if 'timestamp' in display_df.columns:
-            display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+            except:
+                pass  # If timestamp conversion fails, keep original
         
-        # Apply styling based on trade action
-        def color_trade_rows(row):
-            if row['action'] == 'BUY':
-                return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
-            else:
-                return ['background-color: rgba(255, 82, 82, 0.1)'] * len(row)
+        # Check if position_shares column exists to determine trade direction
+        if 'position_shares' in display_df.columns:
+            # Add action column based on position_shares
+            display_df['action'] = display_df['position_shares'].apply(
+                lambda x: 'BUY' if x > 0 else 'SELL' if x < 0 else 'HOLD'
+            )
         
-        st.dataframe(display_df.style.apply(color_trade_rows, axis=1), use_container_width=True)
+        # Apply styling based on trade action if action column exists
+        if 'action' in display_df.columns:
+            def color_trade_rows(row):
+                if row['action'] == 'BUY':
+                    return ['background-color: rgba(0, 200, 83, 0.1)'] * len(row)
+                elif row['action'] == 'SELL':
+                    return ['background-color: rgba(255, 82, 82, 0.1)'] * len(row)
+                else:
+                    return [''] * len(row)
+            
+            styled_df = display_df.style.apply(color_trade_rows, axis=1)
+        else:
+            styled_df = display_df.style
+        
+        st.dataframe(styled_df, use_container_width=True)
 
 # Backtest view
 elif menu == "Backtest":
@@ -202,7 +222,7 @@ elif menu == "Backtest":
             status_text.empty()
     
     with col2:
-        if st.button("Load Model", use_container_width=True):
+        if st.button("Backtest model", use_container_width=True):
             try:
                 model = load_model()
                 train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
@@ -213,7 +233,7 @@ elif menu == "Backtest":
                 backtest_status = st.empty()
                 
                 # Run backtest with progress updates
-                networth, trades = run_backtest(model, test_df, env=eval_env)
+                networth, trades = run_backtest(model, test_df)
                 
                 # Store results in session state
                 st.session_state.backtest_results = (networth, trades)

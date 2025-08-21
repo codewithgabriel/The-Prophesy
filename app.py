@@ -1,6 +1,3 @@
-# ================================================
-# 📂 trading_app/main.py (Fixed)
-# ================================================
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -36,6 +33,7 @@ st.markdown("""
         border-radius: 0.5rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 1rem;
+        height: auto;
     }
     .positive-value {
         color: #00C853;

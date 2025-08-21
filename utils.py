@@ -46,7 +46,7 @@ def run_backtest(model, test_df, env):
         
     return np.array(net_worths), trades
 
-def load_and_prepare_data(start_date, end_date):
+def load_and_prepare_data(start_date, end_date, split=True):
     # # 1) Load & prepare data
     # if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
     #     print("Loading data from CSV...")
@@ -69,11 +69,13 @@ def load_and_prepare_data(start_date, end_date):
     df = add_technical_indicators(df)
 
     # 2) Train/test split
-    split_idx = int(len(df) * CONFIG["train_split"])
-    train_df = df.iloc[:split_idx].reset_index(drop=True)
-    test_df = df.iloc[split_idx:].reset_index(drop=True)
-
-    return train_df, test_df
+    if split:
+        split_idx = int(len(df) * CONFIG["train_split"])
+        train_df = df.iloc[:split_idx].reset_index(drop=True)
+        test_df = df.iloc[split_idx:].reset_index(drop=True)
+        return train_df, test_df
+    else:
+        return df, df
 
 def create_env(train_df, test_df):
      # 3) Vectorized environments for parallelism

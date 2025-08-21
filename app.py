@@ -95,6 +95,11 @@ if 'current_balance' not in st.session_state:
 if 'balance_history' not in st.session_state:
     st.session_state.balance_history = []
 
+st.sidebar.text("Select Start and End Dates for Data Fetching")
+start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))
+end_date = st.sidebar.date_input("End Date", datetime.today())
+if start_date > end_date:
+    st.sidebar.error("Start date must be before end date.") 
 # Sidebar menu
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
@@ -184,7 +189,7 @@ elif menu == "Backtest":
             
             # Actual training would happen here
             try:
-                train_df, test_df = load_and_prepare_data()
+                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
                 env, eval_env = create_env(train_df, test_df)
                 model = train_ppo_model(env, eval_env)
                 st.session_state.training_status = "Training completed successfully!"
@@ -200,7 +205,7 @@ elif menu == "Backtest":
         if st.button("Load Model", use_container_width=True):
             try:
                 model = load_model()
-                train_df, test_df = load_and_prepare_data()
+                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
                 _, eval_env = create_env(train_df, test_df)
                 
                 # Initialize progress for backtest
@@ -244,7 +249,7 @@ elif menu == "Backtest":
     # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
-        train_df, test_df = load_and_prepare_data()
+        train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
         
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])

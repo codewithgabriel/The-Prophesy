@@ -210,8 +210,8 @@ elif menu == "Backtest":
             # Actual training would happen here
             try:
                 train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
-                env, eval_env = create_env(train_df, test_df)
-                model = train_ppo_model(env, eval_env)
+                env, _ = create_env(train_df, test_df)
+                model = train_ppo_model(env, env)
                 st.session_state.training_status = "Training completed successfully!"
                 st.success("Model trained and saved!")
             except Exception as e:

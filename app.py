@@ -188,41 +188,8 @@ if menu == "Dashboard":
 elif menu == "Backtest":
     st.header("🔁 Backtesting")
     
-    col1, col2 = st.sidebar.columns(2)
+    col1 = st.sidebar.columns(1)
     with col1:
-        if st.button("Train Model", use_container_width=True):
-            st.session_state.training_status = "Training in progress..."
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            # Simulate training progress
-            for i in range(100):
-                st.session_state.training_progress = i + 1
-                progress_bar.progress(st.session_state.training_progress / 100)
-                status_text.text(f"Training: {st.session_state.training_progress}% complete")
-                time.sleep(0.05)  # Simulate training time
-                
-                # Update every 10% progress
-                if st.session_state.training_progress % 10 == 0:
-                    st.rerun()
-            
-            # Actual training would happen here
-            try:
-                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
-                env, eval_env = create_env(train_df, test_df)
-                model = train_ppo_model(env, eval_env)
-                st.session_state.training_status = "Training completed successfully!"
-                st.success("Model trained and saved!")
-                
-            except Exception as e:
-                st.session_state.training_status = f"Training failed: {str(e)}"
-                st.error(f"Training error: {str(e)}")
-            
-            col1.write(test_df.head())  # Display first few rows of test data
-            progress_bar.empty()
-            status_text.empty()
-    
-    with col2:
         if st.button("Backtest model", use_container_width=True):
             try:
                 model = load_model()
@@ -351,15 +318,39 @@ elif menu == "Model Training":
     st.info("Configure your model training parameters below.")
     
     with st.expander("Training Parameters"):
-        col1, col2 = st.columns(2)
-        
+        col1  = st.columns(1)
         with col1:
-            learning_rate = st.slider("Learning Rate", 0.0001, 0.01, 0.0003, 0.0001)
-            n_steps = st.slider("Training Steps", 1000, 100000, 10000, 1000)
-        
-        with col2:
-            batch_size = st.slider("Batch Size", 8, 256, 64, 8)
-            n_epochs = st.slider("Epochs", 1, 20, 10, 1)
+            if st.button("Train Model", use_container_width=True):
+                st.session_state.training_status = "Training in progress..."
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                # Simulate training progress
+                for i in range(100):
+                    st.session_state.training_progress = i + 1
+                    progress_bar.progress(st.session_state.training_progress / 100)
+                    status_text.text(f"Training: {st.session_state.training_progress}% complete")
+                    time.sleep(0.05)  # Simulate training time
+                    
+                    # Update every 10% progress
+                    if st.session_state.training_progress % 10 == 0:
+                        st.rerun()
+                
+                # Actual training would happen here
+                try:
+                    train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+                    env, eval_env = create_env(train_df, test_df)
+                    model = train_ppo_model(env, eval_env)
+                    st.session_state.training_status = "Training completed successfully!"
+                    st.success("Model trained and saved!")
+                    
+                except Exception as e:
+                    st.session_state.training_status = f"Training failed: {str(e)}"
+                    st.error(f"Training error: {str(e)}")
+                
+                col1.write(test_df.head())  # Display first few rows of test data
+                progress_bar.empty()
+                status_text.empty()
     
     if st.button("Start Training"):
         st.session_state.training_status = "Training in progress..."

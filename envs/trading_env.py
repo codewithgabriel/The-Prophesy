@@ -75,7 +75,6 @@ class TradingEnv(gym.Env):  # Define a Gym-compatible environment by subclassing
 
         self.raw_df = df.reset_index(drop=True).copy()  # Store a clean copy (0..N-1 index).
         self.feature_cols = feature_cols if feature_cols is not None else ["Close"]  # Default features.
-        print(self.feature_cols)
         self.window_size = int(window_size)  # Ensure int and store history length.
 
         # Economic params

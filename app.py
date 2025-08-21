@@ -8,6 +8,7 @@ from brokers.broker_alpaca import AlpacaBroker
 from brokers.broker_ccxt import CCXTBroker
 from models.train_ppo import train_ppo_model 
 from utils import run_backtest, create_env, load_and_prepare_data, load_model, plot_equity_curve, plot_trades
+import json
 
 # Set page configuration
 st.set_page_config(
@@ -97,15 +98,14 @@ if 'model' not in st.session_state:
     st.session_state.model = None
 
 # Sidebar menu
-menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
+menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training", "Configuration"])
+symbol = st.sidebar.text_input("Asset Symbol", CONFIG["asset_symbol"], help="Enter the asset symbol (e.g., BTC/USD)")
+if symbol:
+    CONFIG["asset_symbol"] = symbol
 
 st.sidebar.text("Select start and end dates for data loading:")
 start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))
 end_date = st.sidebar.date_input("End Date", datetime.today())
-symbol = st.sidebar.text_input("Asset Symbol", CONFIG["asset_symbol"], help="Enter the asset symbol (e.g., BTC/USD)")
-
-if symbol:
-    CONFIG["asset_symbol"] = symbol
 
 if start_date > end_date:
     st.sidebar.error("Start date must be before end date.")
@@ -401,3 +401,52 @@ elif menu == "Model Training":
             st.error(f"Training error: {str(e)}")
             progress_bar.empty()
             status_text.empty()
+
+# Configuration
+if menu == "Configuration":
+    st.sidebar.header("Configuration")
+    st.sidebar.markdown("Set your trading parameters below:")
+
+    # Trading parameters
+    CONFIG["asset_symbol"] = st.sidebar.text_input("Asset Symbol", CONFIG["asset_symbol"])
+    CONFIG["timeframe"] = st.sidebar.selectbox("Timeframe", ["1m", "5m", "1h", "1d"])
+    CONFIG["risk_reward_ratio"] = st.sidebar.slider("Risk/Reward Ratio", 1.0, 5.0, 2.0)
+    CONFIG["max_drawdown"] = st.sidebar.slider("Max Drawdown", 0.0, 100.0, 20.0)
+    CONFIG["trading_fee"] = st.sidebar.slider("Trading Fee (%)", 0.0, 5.0, 0.1)
+
+    # Model Configuration
+    CONFIG["csv_path"] = st.sidebar.text_input("CSV Path", CONFIG.get("csv_path", "dataset/aapl.csv"))
+    CONFIG["start_date"] = st.sidebar.text_input("Start Date", CONFIG.get("start_date", "2015-01-01"))
+    CONFIG["end_date"] = st.sidebar.text_input("End Date", CONFIG.get("end_date", "2023-01-01"))
+    CONFIG["train_split"] = st.sidebar.slider("Train Split", 0.5, 1.0, CONFIG.get("train_split", 0.8))
+    CONFIG["window_size"] = st.sidebar.number_input("Window Size", min_value=1, max_value=500, value=CONFIG.get("window_size", 50))
+    CONFIG["initial_balance"] = st.sidebar.number_input("Initial Balance", min_value=1.0, value=CONFIG.get("initial_balance", 100.0))
+    CONFIG["commission_pct"] = st.sidebar.number_input("Commission (%)", min_value=0.0, max_value=0.01, value=CONFIG.get("commission_pct", 0.001))
+    CONFIG["commission_fixed"] = st.sidebar.number_input("Commission Fixed", min_value=0.0, value=CONFIG.get("commission_fixed", 0.0))
+    CONFIG["spread_pct"] = st.sidebar.number_input("Spread (%)", min_value=0.0, max_value=0.01, value=CONFIG.get("spread_pct", 0.0001))
+    CONFIG["slippage_coeff"] = st.sidebar.number_input("Slippage Coeff", min_value=0.0, max_value=0.01, value=CONFIG.get("slippage_coeff", 0.0002))
+    CONFIG["volume_limit"] = st.sidebar.slider("Volume Limit", 0.0, 1.0, CONFIG.get("volume_limit", 0.1))
+    CONFIG["max_position_size"] = st.sidebar.number_input("Max Position Size", min_value=1, value=CONFIG.get("max_position_size", 10000))
+    CONFIG["max_risk_per_trade"] = st.sidebar.slider("Max Risk Per Trade", 0.0, 1.0, CONFIG.get("max_risk_per_trade", 0.02))
+    CONFIG["stop_loss_pct"] = st.sidebar.slider("Stop Loss (%)", 0.0, 1.0, CONFIG.get("stop_loss_pct", 0.02))
+    CONFIG["drawdown_scale_threshold"] = st.sidebar.slider("Drawdown Scale Threshold", 0.0, 1.0, CONFIG.get("drawdown_scale_threshold", 0.1))
+    CONFIG["drawdown_scale_factor"] = st.sidebar.slider("Drawdown Scale Factor", 0.0, 1.0, CONFIG.get("drawdown_scale_factor", 0.5))
+    CONFIG["volatility_scaling"] = st.sidebar.checkbox("Volatility Scaling", value=CONFIG.get("volatility_scaling", True))
+    CONFIG["max_leverage"] = st.sidebar.slider("Max Leverage", 1.0, 10.0, CONFIG.get("max_leverage", 2.0))
+    CONFIG["maintenance_margin"] = st.sidebar.slider("Maintenance Margin", 0.0, 1.0, CONFIG.get("maintenance_margin", 0.25))
+    CONFIG["financing_rate_annual"] = st.sidebar.slider("Financing Rate Annual", 0.0, 1.0, CONFIG.get("financing_rate_annual", 0.02))
+    CONFIG["reward_scaling"] = st.sidebar.slider("Reward Scaling", 0.0, 10.0, CONFIG.get("reward_scaling", 1.0))
+    CONFIG["dd_penalty_coeff"] = st.sidebar.slider("Drawdown Penalty Coeff", 0.0, 10.0, CONFIG.get("dd_penalty_coeff", 0.0))
+    CONFIG["turnover_penalty_coeff"] = st.sidebar.slider("Turnover Penalty Coeff", 0.0, 10.0, CONFIG.get("turnover_penalty_coeff", 0.0))
+    CONFIG["normalize_observations"] = st.sidebar.checkbox("Normalize Observations", value=CONFIG.get("normalize_observations", True))
+    CONFIG["random_start"] = st.sidebar.checkbox("Random Start", value=CONFIG.get("random_start", True))
+    CONFIG["episode_length"] = st.sidebar.number_input("Episode Length", min_value=1, value=CONFIG.get("episode_length", 0) or 0)
+    CONFIG["total_timesteps"] = st.sidebar.number_input("Total Timesteps", min_value=1, value=CONFIG.get("total_timesteps", 300000))
+    CONFIG["tensorboard_log_dir"] = st.sidebar.text_input("Tensorboard Log Dir", CONFIG.get("tensorboard_log_dir", "saved_models/ppo/tb_logs"))
+    CONFIG["model_save_path"] = st.sidebar.text_input("Model Save Path", CONFIG.get("model_save_path", "saved_models/ppo_trader_model/final_model.zip"))
+    
+    # Save configuration
+    if st.sidebar.button("Save Config"):
+        with open("config.json", "w") as f:
+            json.dump(CONFIG, f)
+        st.sidebar.success("Configuration saved successfully!")

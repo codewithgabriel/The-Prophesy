@@ -77,7 +77,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown('<h1 class="main-header">📈 Professional RL Trading Dashboard</h1>', unsafe_allow_html=True)
+# st.markdown('<h1 class="main-header">📈 Professional RL Trading Dashboard</h1>', unsafe_allow_html=True)
 
 # Initialize session state for storing data across reruns
 if 'training_progress' not in st.session_state:

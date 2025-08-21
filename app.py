@@ -370,60 +370,60 @@ elif menu == "Live Trading":
 
 
 
-# # Model Training view
-# elif menu == "Model Training":
-#     st.header("🤖 Model Training")
+# Model Training view
+elif menu == "Model Training":
+    st.header("🤖 Model Training")
     
-#     st.info("Configure your model training parameters below.")
+    st.info("Configure your model training parameters below.")
     
-#     # Training parameters
-#     n_epochs = st.slider("Number of Epochs", min_value=1, max_value=100, value=10)
-#     learning_rate = st.slider("Learning Rate", min_value=0.0001, max_value=0.01, value=0.001, step=0.0001, format="%.4f")
+    # Training parameters
+    n_epochs = st.slider("Number of Epochs", min_value=1, max_value=100, value=10)
+    learning_rate = st.slider("Learning Rate", min_value=0.0001, max_value=0.01, value=0.001, step=0.0001, format="%.4f")
     
-#     if st.button("Start Training"):
-#         st.session_state.training_status = "Training in progress..."
-#         progress_bar = st.progress(0)
-#         status_text = st.empty()
+    if st.button("Start Training"):
+        st.session_state.training_status = "Training in progress..."
+        progress_bar = st.progress(0)
+        status_text = st.empty()
         
-#         # Create a placeholder for training metrics
-#         metrics_placeholder = st.empty()
+        # Create a placeholder for training metrics
+        metrics_placeholder = st.empty()
         
-#         # Simulate training with periodic updates
-#         for i in range(100):
-#             st.session_state.training_progress = i + 1
-#             progress_bar.progress(st.session_state.training_progress / 100)
-#             status_text.text(f"Epoch {i//10 + 1}/{n_epochs} - Training: {st.session_state.training_progress}% complete")
+        # Simulate training with periodic updates
+        for i in range(100):
+            st.session_state.training_progress = i + 1
+            progress_bar.progress(st.session_state.training_progress / 100)
+            status_text.text(f"Epoch {i//10 + 1}/{n_epochs} - Training: {st.session_state.training_progress}% complete")
             
-#             # Update metrics every 10%
-#             if i % 10 == 0:
-#                 # Simulated metrics
-#                 metrics_data = {
-#                     "Epoch": i//10 + 1,
-#                     "Reward": np.random.uniform(-0.5, 2.0),
-#                     "Loss": np.random.uniform(0.1, 0.5),
-#                     "Value Loss": np.random.uniform(0.01, 0.1),
-#                     "Explained Variance": np.random.uniform(0.7, 0.95)
-#                 }
+            # Update metrics every 10%
+            if i % 10 == 0:
+                # Simulated metrics
+                metrics_data = {
+                    "Epoch": i//10 + 1,
+                    "Reward": np.random.uniform(-0.5, 2.0),
+                    "Loss": np.random.uniform(0.1, 0.5),
+                    "Value Loss": np.random.uniform(0.01, 0.1),
+                    "Explained Variance": np.random.uniform(0.7, 0.95)
+                }
                 
-#                 # Display metrics in a table
-#                 metrics_df = pd.DataFrame([metrics_data])
-#                 metrics_placeholder.dataframe(metrics_df, use_container_width=True)
+                # Display metrics in a table
+                metrics_df = pd.DataFrame([metrics_data])
+                metrics_placeholder.dataframe(metrics_df, use_container_width=True)
             
-#             time.sleep(0.1)  # Simulate training time
+            time.sleep(0.1)  # Simulate training time
         
-#         progress_bar.empty()
-#         status_text.empty()
-#         st.session_state.training_status = "Training completed successfully!"
-#         st.success("Model training completed!")
+        progress_bar.empty()
+        status_text.empty()
+        st.session_state.training_status = "Training completed successfully!"
+        st.success("Model training completed!")
         
-#         # Actual training would happen here
-#         try:
-#             train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
-#             env, eval_env = create_env(train_df, test_df)
-#             model = train_ppo_model(env, eval_env, n_epochs=n_epochs, learning_rate=learning_rate)
-#             st.session_state.model = model
-#             st.success("Model trained and saved successfully!")
+        # Actual training would happen here
+        try:
+            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+            env, eval_env = create_env(train_df, test_df)
+            model = train_ppo_model(env, eval_env)
+            st.session_state.model = model
+            st.success("Model trained and saved successfully!")
             
-#         except Exception as e:
-#             st.session_state.training_status = f"Training failed: {str(e)}"
-#             st.error(f"Training error: {str(e)}")
+        except Exception as e:
+            st.session_state.training_status = f"Training failed: {str(e)}"
+            st.error(f"Training error: {str(e)}")

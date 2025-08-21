@@ -196,7 +196,7 @@ elif menu == "Backtest":
     if st.button("Backtest model"):
         try:
             model = load_model()
-            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False, interval=CONFIG["timeframe"])
+            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=True, interval=CONFIG["timeframe"])
             _, eval_env = create_env(train_df, test_df)
             
             # Initialize progress for backtest

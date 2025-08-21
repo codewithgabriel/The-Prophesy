@@ -12,7 +12,7 @@ CONFIG = {
     
     # Environment core
     "window_size": 50,
-    "initial_balance": 100_000.0,
+    "initial_balance": 100.0,
     
     # Costs & execution
     "commission_pct": 0.001,           # replaces transaction_cost_pct

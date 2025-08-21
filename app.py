@@ -104,7 +104,7 @@ if start_date > end_date:
     
 # Dashboard view
 if menu == "Dashboard":
-    st.header("📊 Trading Dashboard")
+    # st.header("📊 Trading Dashboard")
     
     # Create columns for metrics
     col1, col2, col3, col4 = st.columns(4)

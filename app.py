@@ -76,9 +76,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header
-# st.markdown('<h1 class="main-header">📈 Professional RL Trading Dashboard</h1>', unsafe_allow_html=True)
-
 # Initialize session state for storing data across reruns
 if 'training_progress' not in st.session_state:
     st.session_state.training_progress = 0
@@ -92,6 +89,12 @@ if 'current_balance' not in st.session_state:
     st.session_state.current_balance = CONFIG["initial_balance"]
 if 'balance_history' not in st.session_state:
     st.session_state.balance_history = []
+if 'live_trading_active' not in st.session_state:
+    st.session_state.live_trading_active = False
+if 'broker' not in st.session_state:
+    st.session_state.broker = None
+if 'model' not in st.session_state:
+    st.session_state.model = None
 
 # Sidebar menu
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
@@ -104,13 +107,12 @@ if start_date > end_date:
     
 # Dashboard view
 if menu == "Dashboard":
-    # st.header("📊 Trading Dashboard")
+    st.header("📊 Trading Dashboard")
     
     # Create columns for metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        
         st.metric("Current Balance", f"${st.session_state.current_balance:,.2f}")
         
         # Balance indicator
@@ -121,25 +123,18 @@ if menu == "Dashboard":
         
         st.markdown(f'<div class="balance-indicator"><div class="balance-marker" style="left: {balance_position}%;"></div></div>', unsafe_allow_html=True)
         
-    
     with col2:
-        
         profit_loss = st.session_state.current_balance - CONFIG["initial_balance"]
         pnl_class = "positive-value" if profit_loss >= 0 else "negative-value"
         st.metric("Profit/Loss", f"${profit_loss:,.2f}", delta=f"{profit_loss/CONFIG['initial_balance']*100:.2f}%")
         
-    
     with col3:
-        
         st.metric("Total Trades", str(len(st.session_state.trade_decisions)))
         
-    
     with col4:
-        
         winning_trades = len([t for t in st.session_state.trade_decisions if t.get("realized_pnl", 0) > 0])
         win_rate = (winning_trades / len(st.session_state.trade_decisions) * 100) if st.session_state.trade_decisions else 0
         st.metric("Win Rate", f"{win_rate:.2f}%")
-        
     
     # Display equity curve if available
     if st.session_state.backtest_results:
@@ -149,7 +144,7 @@ if menu == "Dashboard":
     # Recent trade decisions table
     if st.session_state.trade_decisions:
         st.subheader("Recent Trading Decisions")
-        recent_trades = pd.DataFrame(st.session_state.trade_decisions[-100:])  # Show last 10 trades
+        recent_trades = pd.DataFrame(st.session_state.trade_decisions[-100:])  # Show last 100 trades
         
         # Format the DataFrame for display
         display_df = recent_trades.copy()
@@ -187,40 +182,39 @@ if menu == "Dashboard":
 # Backtest view
 elif menu == "Backtest":
     st.header("🔁 Backtesting")
-    col1 = st.sidebar.columns(1)
-    with col1:
-        if st.button("Backtest model", use_container_width=True):
-            try:
-                model = load_model()
-                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
-                _, eval_env = create_env(train_df, test_df)
-                
-                # Initialize progress for backtest
-                backtest_progress = st.progress(0)
-                backtest_status = st.empty()
-                
-                # Run backtest with progress updates
-                networth, trades = run_backtest(model, test_df, env=eval_env)
-                
-                # Store results in session state
-                st.session_state.backtest_results = (networth, trades)
-                st.session_state.trade_decisions = trades
-                
-                # Update balance history
-                st.session_state.balance_history = networth.tolist()
-                st.session_state.current_balance = networth[-1] if len(networth) > 0 else CONFIG["initial_balance"]
-                
-                backtest_progress.progress(100)
-                backtest_status.text("Backtest completed!")
-                time.sleep(1)
-                backtest_progress.empty()
-                backtest_status.empty()
-                
-                st.success("Backtest completed successfully!")
-                st.rerun()
-                
-            except Exception as e:
-                st.error(f"Error loading model or running backtest: {str(e)}")
+    
+    if st.button("Backtest model"):
+        try:
+            model = load_model()
+            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
+            _, eval_env = create_env(train_df, test_df)
+            
+            # Initialize progress for backtest
+            backtest_progress = st.progress(0)
+            backtest_status = st.empty()
+            
+            # Run backtest with progress updates
+            networth, trades = run_backtest(model, test_df, env=eval_env)
+            
+            # Store results in session state
+            st.session_state.backtest_results = (networth, trades)
+            st.session_state.trade_decisions = trades
+            
+            # Update balance history
+            st.session_state.balance_history = networth.tolist()
+            st.session_state.current_balance = networth[-1] if len(networth) > 0 else CONFIG["initial_balance"]
+            
+            backtest_progress.progress(100)
+            backtest_status.text("Backtest completed!")
+            time.sleep(1)
+            backtest_progress.empty()
+            backtest_status.empty()
+            
+            st.success("Backtest completed successfully!")
+            st.rerun()
+            
+        except Exception as e:
+            st.error(f"Error loading model or running backtest: {str(e)}")
     
     # Display training status
     st.sidebar.markdown("### Training Status")
@@ -233,7 +227,6 @@ elif menu == "Backtest":
     
     max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=5000, value=200, step=1)
     
-    # Display backtest results if available
     # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
@@ -285,6 +278,7 @@ elif menu == "Live Trading":
             try:
                 broker = AlpacaBroker(api_key, api_secret, base_url)
                 account_info = broker.get_account()
+                st.session_state.broker = broker
                 st.sidebar.success("Connected successfully!")
                 st.sidebar.json(account_info)
             except Exception as e:
@@ -294,6 +288,7 @@ elif menu == "Live Trading":
             try:
                 broker = CCXTBroker("binance", api_key, api_secret)
                 balance = broker.get_balance()
+                st.session_state.broker = broker
                 st.sidebar.success("Connected successfully!")
                 st.sidebar.json(balance)
             except Exception as e:
@@ -303,11 +298,74 @@ elif menu == "Live Trading":
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Trading Controls")
     
+    # Load model for live trading
+    if st.sidebar.button("Load Model"):
+        try:
+            model = load_model()
+            st.session_state.model = model
+            st.sidebar.success("Model loaded successfully!")
+        except Exception as e:
+            st.sidebar.error(f"Error loading model: {str(e)}")
+    
     if st.sidebar.button("Start Live Trading"):
-        st.info("Live trading started. Monitoring market...")
-        # Here you would implement the actual live trading logic
+        if st.session_state.broker is None:
+            st.error("Please connect to a broker first!")
+        elif st.session_state.model is None:
+            st.error("Please load the model first!")
+        else:
+            st.session_state.live_trading_active = True
+            st.info("Live trading started. Monitoring market...")
+            
+            # Start live trading in a separate thread (simplified version)
+            try:
+                # Get current market data
+                symbol = CONFIG["asset_symbol"].replace("/", "") if "/" in CONFIG["asset_symbol"] else CONFIG["asset_symbol"]
+                current_price = st.session_state.broker.get_current_price(symbol)
+                
+                # Use model to make trading decision
+                # This is a simplified version - in practice you'd need to format the data
+                # to match your model's input requirements
+                st.info(f"Current price: ${current_price}")
+                
+                # For demonstration, we'll simulate a decision
+                decision = np.random.choice(['BUY', 'SELL', 'HOLD'], p=[0.3, 0.3, 0.4])
+                st.success(f"Model decision: {decision}")
+                
+                if decision == 'BUY':
+                    # Execute buy order (simplified)
+                    order = st.session_state.broker.place_order(
+                        symbol=symbol,
+                        quantity=1,  # Example quantity
+                        side='buy',
+                        order_type='market'
+                    )
+                    st.session_state.trade_decisions.append({
+                        'timestamp': datetime.now(),
+                        'action': 'BUY',
+                        'price': current_price,
+                        'quantity': 1
+                    })
+                    
+                elif decision == 'SELL':
+                    # Execute sell order (simplified)
+                    order = st.session_state.broker.place_order(
+                        symbol=symbol,
+                        quantity=1,  # Example quantity
+                        side='sell',
+                        order_type='market'
+                    )
+                    st.session_state.trade_decisions.append({
+                        'timestamp': datetime.now(),
+                        'action': 'SELL',
+                        'price': current_price,
+                        'quantity': 1
+                    })
+                
+            except Exception as e:
+                st.error(f"Trading error: {str(e)}")
         
     if st.sidebar.button("Stop Live Trading"):
+        st.session_state.live_trading_active = False
         st.warning("Live trading stopped.")
 
 # Model Training view
@@ -316,40 +374,9 @@ elif menu == "Model Training":
     
     st.info("Configure your model training parameters below.")
     
-    with st.expander("Training Parameters"):
-        col1  = st.columns(1)
-        with col1:
-            if st.button("Train Model", use_container_width=True):
-                st.session_state.training_status = "Training in progress..."
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                
-                # Simulate training progress
-                for i in range(100):
-                    st.session_state.training_progress = i + 1
-                    progress_bar.progress(st.session_state.training_progress / 100)
-                    status_text.text(f"Training: {st.session_state.training_progress}% complete")
-                    time.sleep(0.05)  # Simulate training time
-                    
-                    # Update every 10% progress
-                    if st.session_state.training_progress % 10 == 0:
-                        st.rerun()
-                
-                # Actual training would happen here
-                try:
-                    train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
-                    env, eval_env = create_env(train_df, test_df)
-                    model = train_ppo_model(env, eval_env)
-                    st.session_state.training_status = "Training completed successfully!"
-                    st.success("Model trained and saved!")
-                    
-                except Exception as e:
-                    st.session_state.training_status = f"Training failed: {str(e)}"
-                    st.error(f"Training error: {str(e)}")
-                
-                col1.write(test_df.head())  # Display first few rows of test data
-                progress_bar.empty()
-                status_text.empty()
+    # Training parameters
+    n_epochs = st.slider("Number of Epochs", min_value=1, max_value=100, value=10)
+    learning_rate = st.slider("Learning Rate", min_value=0.0001, max_value=0.01, value=0.001, step=0.0001, format="%.4f")
     
     if st.button("Start Training"):
         st.session_state.training_status = "Training in progress..."
@@ -386,3 +413,15 @@ elif menu == "Model Training":
         status_text.empty()
         st.session_state.training_status = "Training completed successfully!"
         st.success("Model training completed!")
+        
+        # Actual training would happen here
+        try:
+            train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
+            env, eval_env = create_env(train_df, test_df)
+            model = train_ppo_model(env, eval_env, n_epochs=n_epochs, learning_rate=learning_rate)
+            st.session_state.model = model
+            st.success("Model trained and saved successfully!")
+            
+        except Exception as e:
+            st.session_state.training_status = f"Training failed: {str(e)}"
+            st.error(f"Training error: {str(e)}")

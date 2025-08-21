@@ -279,8 +279,7 @@ elif menu == "Backtest":
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])
         
         with tab1:
-            tab1.write(trades)
-            tab1.write(test_df.head())
+           
             st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
         
         with tab2:

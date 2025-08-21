@@ -32,21 +32,22 @@ def run_backtest(model, test_df, train_df):
     return np.array(net_worths), trades
 
 def load_and_prepare_data(start_date=None, end_date=None):
-    if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
-        df = pd.read_csv(CONFIG["csv_path"])
-        df["Date"] = pd.to_datetime(df["Date"])
-    else:
-        # Use provided UI dates if given, else fallback to CONFIG
-        start = start_date if start_date else CONFIG["start_date"]
-        end = end_date if end_date else CONFIG["end_date"]
-        df = download_price_data(CONFIG["asset_symbol"], start, end)
-        df["Date"] = pd.to_datetime(df["Date"])
-
-    df = df.sort_values("Date").reset_index(drop=True)
+    # if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
+    #     df = pd.read_csv(CONFIG["csv_path"])
+    #     df["Date"] = pd.to_datetime(df["Date"])
+    # else:
+    #     # Use provided UI dates if given, else fallback to CONFIG
+    #     start = start_date if start_date else CONFIG["start_date"]
+    #     end = end_date if end_date else CONFIG["end_date"]
+    #     df = download_price_data(CONFIG["asset_symbol"], start, end)
+    df = download_price_data(CONFIG["asset_symbol"], start_date, end_date)
+    df["Date"] = pd.to_datetime(df["Date"])
     for col in ["Open", "High", "Low", "Close", "Volume"]:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-    df = add_technical_indicators(df)
+            df[col] = pd.to_numeric(df[col], errors="coerce")  # convert to float, NaN if invalid
+    df = add_technical_indicators(df) 
+    df = df.sort_values("Date").reset_index(drop=True)
+    
 
     split_idx = int(len(df) * CONFIG["train_split"])
     train_df = df.iloc[:split_idx].reset_index(drop=True)

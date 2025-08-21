@@ -275,7 +275,7 @@ elif menu == "Backtest":
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
         train_df, test_df = load_and_prepare_data()
-        
+        st.write(test_df.head())
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])
         

@@ -1,123 +1,164 @@
+import streamlit as st
 import pandas as pd
-from envs.config import CONFIG
-from technical_analysis import add_technical_indicators
-import os
-from data_fetcher import download_price_data
 import numpy as np
-from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3 import PPO
-from envs.make_env import make_env, make_eval_env
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import time
+from datetime import datetime
+from envs.config import CONFIG
+from brokers.broker_alpaca import AlpacaBroker
+from brokers.broker_ccxt import CCXTBroker
+from models.train_ppo import train_ppo_model
+from utils import run_backtest, create_env, load_and_prepare_data, load_model, plot_equity_curve, plot_trades
 
-def load_model():
-    return PPO.load(CONFIG['model_save_path'])
+# --- Page Setup ---
+st.set_page_config(
+    layout="wide",
+    page_title="RL Trading Dashboard",
+    page_icon="📈",
+    initial_sidebar_state="expanded"
+)
 
-def save_trades_to_csv(trades, filename="trades.csv"):
-    pd.DataFrame(trades).to_csv(filename, index=False)
+# --- Styling ---
+st.markdown("""
+<style>
+    .main-header { font-size: 2.5rem; color: #1E88E5; text-align: center; margin-bottom: 1rem; font-weight: 700; }
+    .metric-card { background-color: #f9f9f9; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .positive-value { color: #00C853; font-weight: 700; }
+    .negative-value { color: #FF5252; font-weight: 700; }
+</style>
+""", unsafe_allow_html=True)
 
-def run_backtest(model, test_df, window_size=50):
-    env = make_eval_env(test_df, window_size)
-    obs = env.reset()
-    net_worths, trades = [], []
-    done = [False]
+# --- Session State Init ---
+for key, default in {
+    'training_progress': 0,
+    'training_status': "Not started",
+    'backtest_results': None,
+    'trade_decisions': [],
+    'current_balance': CONFIG["initial_balance"],
+    'balance_history': []
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-    while not done[0]:
-        action, _ = model.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
-        net_worths.append(info[0]['net_worth'])
-        current_trades = getattr(env.envs[0], 'trades', [])
-        if current_trades:
-            trades.extend(current_trades.copy())
+# --- Sidebar Navigation ---
+st.sidebar.title("📌 Navigation")
+menu = st.sidebar.radio("Go to:", ["Dashboard", "Backtest", "Live Trading", "Model Training"],
+                        format_func=lambda x: {
+                            "Dashboard": "📊 Dashboard",
+                            "Backtest": "🔁 Backtest",
+                            "Live Trading": "🔴 Live Trading",
+                            "Model Training": "🤖 Model Training"
+                        }[x])
 
-    return np.array(net_worths), trades
+# ================= Dashboard =================
+if menu == "Dashboard":
+    st.markdown('<h1 class="main-header">📈 Professional RL Trading Dashboard</h1>', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
 
-def load_and_prepare_data(start_date=None, end_date=None):
-    if CONFIG["csv_path"] and os.path.exists(CONFIG["csv_path"]):
-        df = pd.read_csv(CONFIG["csv_path"])
-        df["Date"] = pd.to_datetime(df["Date"])
+    with col1:
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.metric("Current Balance", f"${st.session_state.current_balance:,.2f}")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        pnl = st.session_state.current_balance - CONFIG["initial_balance"]
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.metric("Profit/Loss", f"${pnl:,.2f}", delta=f"{pnl/CONFIG['initial_balance']*100:.2f}%")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col3:
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.metric("Total Trades", str(len(st.session_state.trade_decisions)))
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col4:
+        win_rate = len([t for t in st.session_state.trade_decisions if t.get('profit',0) > 0])
+        win_rate = win_rate / len(st.session_state.trade_decisions) * 100 if st.session_state.trade_decisions else 0
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.metric("Win Rate", f"{win_rate:.2f}%")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    if st.session_state.backtest_results:
+        networth, trades = st.session_state.backtest_results
+        st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
+
+    if st.session_state.trade_decisions:
+        st.subheader("Recent Trading Decisions")
+        df = pd.DataFrame(st.session_state.trade_decisions[-10:])
+        if 'timestamp' in df:
+            df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
+        if 'position_shares' in df:
+            df['action'] = df['position_shares'].apply(lambda x: 'BUY' if x>0 else 'SELL' if x<0 else 'HOLD')
+        st.dataframe(df, use_container_width=True)
+
+# ================= Backtest =================
+elif menu == "Backtest":
+    st.header("🔁 Backtesting")
+
+    start_date = st.date_input("Start Date", datetime(2020,1,1))
+    end_date = st.date_input("End Date", datetime.today())
+
+    if st.button("Run Backtest"):
+        try:
+            train_df, test_df = load_and_prepare_data(start_date, end_date)
+            model = load_model()
+            networth, trades = run_backtest(model, test_df)
+            st.session_state.backtest_results = (networth, trades)
+            st.session_state.trade_decisions = trades
+            st.session_state.balance_history = networth.tolist()
+            st.session_state.current_balance = networth[-1]
+            st.success("Backtest completed successfully!")
+        except Exception as e:
+            st.error(f"Backtest failed: {e}")
+
+    if st.session_state.backtest_results:
+        networth, trades = st.session_state.backtest_results
+        tab1, tab2 = st.tabs(["Equity Curve", "Trades"])
+        with tab1:
+            st.plotly_chart(plot_equity_curve(networth, CONFIG["initial_balance"]), use_container_width=True)
+        with tab2:
+            train_df, test_df = load_and_prepare_data(start_date, end_date)
+            st.plotly_chart(plot_trades(test_df, trades), use_container_width=True)
+
+# ================= Live Trading =================
+elif menu == "Live Trading":
+    st.header("🔴 Live Trading")
+
+    broker_type = st.selectbox("Broker", ["Alpaca", "Binance (CCXT)"])
+    api_key = st.text_input("API Key")
+    api_secret = st.text_input("API Secret", type="password")
+    start_date = st.date_input("Start Date", datetime(2022,1,1))
+    end_date = st.date_input("End Date", datetime.today())
+
+    if broker_type == "Alpaca":
+        base_url = st.text_input("Base URL", "https://paper-api.alpaca.markets")
+        if st.button("Connect to Alpaca"):
+            try:
+                broker = AlpacaBroker(api_key, api_secret, base_url)
+                st.success("Connected!")
+                st.json(broker.get_account())
+            except Exception as e:
+                st.error(f"Connection failed: {e}")
     else:
-        # Use provided UI dates if given, else fallback to CONFIG
-        start = start_date if start_date else CONFIG["start_date"]
-        end = end_date if end_date else CONFIG["end_date"]
-        df = download_price_data(CONFIG["asset_symbol"], start, end)
-        df["Date"] = pd.to_datetime(df["Date"])
+        if st.button("Connect to Binance"):
+            try:
+                broker = CCXTBroker("binance", api_key, api_secret)
+                st.success("Connected!")
+                st.json(broker.get_balance())
+            except Exception as e:
+                st.error(f"Connection failed: {e}")
 
-    df = df.sort_values("Date").reset_index(drop=True)
-    for col in ["Open", "High", "Low", "Close", "Volume"]:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-    df = add_technical_indicators(df)
+# ================= Model Training =================
+elif menu == "Model Training":
+    st.header("🤖 Model Training")
+    st.info("Set training params below")
 
-    split_idx = int(len(df) * CONFIG["train_split"])
-    train_df = df.iloc[:split_idx].reset_index(drop=True)
-    test_df = df.iloc[split_idx:].reset_index(drop=True)
-    return train_df, test_df
-
-def create_env(train_df, test_df):
-    env = DummyVecEnv([lambda: make_env(train_df, train_mode=True)])
-    eval_env = DummyVecEnv([lambda: make_env(test_df, train_mode=False)])
-    return env, eval_env
-
-def plot_equity_curve(networth, initial_balance):
-    returns = np.diff(networth) / networth[:-1] * 100
-    fig = make_subplots(rows=2, cols=1, subplot_titles=('Equity Curve', 'Daily Returns'),
-                        vertical_spacing=0.1, row_heights=[0.7, 0.3])
-
-    fig.add_trace(go.Scatter(y=networth, mode="lines", name="Equity",
-                             line=dict(color='#1E88E5', width=2),
-                             fill='tozeroy', fillcolor='rgba(30,136,229,0.1)'),
-                  row=1, col=1)
-
-    fig.add_hline(y=initial_balance, line_dash="dash", line_color="green",
-                  annotation_text="Initial Balance", row=1, col=1)
-
-    colors = ['green' if r >= 0 else 'red' for r in returns]
-    fig.add_trace(go.Bar(y=returns, name='Returns', marker_color=colors, opacity=0.7), row=2, col=1)
-
-    fig.update_layout(height=600, showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
-                      paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#2c3e50'),
-                      margin=dict(l=50, r=50, t=50, b=50))
-    fig.update_yaxes(title_text="Balance ($)", row=1, col=1)
-    fig.update_yaxes(title_text="Return (%)", row=2, col=1)
-    fig.update_xaxes(title_text="Time", row=2, col=1)
-    return fig
-
-def plot_trades(df, trades, max_trades=100):
-    fig = make_subplots(rows=2, cols=1, subplot_titles=('Price with trades', 'Volume'),
-                        vertical_spacing=0.1, row_heights=[0.7, 0.3], shared_xaxes=True)
-
-    fig.add_trace(go.Candlestick(x=df["Date"], open=df["Open"], high=df["High"],
-                                 low=df["Low"], close=df["Close"], name="Price",
-                                 increasing_line_color='#2E7D32', decreasing_line_color='#D32F2F'),
-                  row=1, col=1)
-
-    trades_to_plot = trades[-max_trades:] if max_trades < len(trades) else trades
-    buys, sells = ([], []), ([], [])
-    for t in trades_to_plot:
-        trade_time = df.loc[t["index"], "Date"]
-        trade_price = df.loc[t["index"], "Close"]
-        if t["position_shares"] > 0:
-            buys[0].append(trade_time); buys[1].append(trade_price)
-        else:
-            sells[0].append(trade_time); sells[1].append(trade_price)
-
-    if buys[0]:
-        fig.add_trace(go.Scatter(x=buys[0], y=buys[1], mode="markers",
-                                 marker=dict(color="#00C853", size=10, symbol="triangle-up",
-                                             line=dict(width=2, color="DarkGreen")),
-                                 name="Buy"), row=1, col=1)
-    if sells[0]:
-        fig.add_trace(go.Scatter(x=sells[0], y=sells[1], mode="markers",
-                                 marker=dict(color="#FF5252", size=10, symbol="triangle-down",
-                                             line=dict(width=2, color="DarkRed")),
-                                 name="Sell"), row=1, col=1)
-
-    fig.add_trace(go.Bar(x=df["Date"], y=df["Volume"], name="Volume", marker_color='#546E7A', opacity=0.5), row=2, col=1)
-    fig.update_layout(height=800, showlegend=True, plot_bgcolor='rgba(0,0,0,0)',
-                      paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#2c3e50'),
-                      margin=dict(l=50, r=50, t=50, b=50), xaxis_rangeslider_visible=False)
-    fig.update_yaxes(title_text="Price ($)", row=1, col=1)
-    fig.update_yaxes(title_text="Volume", row=2, col=1)
-    fig.update_xaxes(title_text="Date", row=2, col=1)
-    return fig
+    lr = st.slider("Learning Rate", 0.0001, 0.01, 0.0003, 0.0001)
+    steps = st.slider("Training Steps", 1000, 100000, 10000, 1000)
+    if st.button("Start Training"):
+        try:
+            train_df, test_df = load_and_prepare_data()
+            env, eval_env = create_env(train_df, test_df)
+            model = train_ppo_model(env, eval_env)
+            st.success("Model trained successfully!")
+        except Exception as e:
+            st.error(f"Training failed: {e}")

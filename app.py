@@ -98,6 +98,12 @@ if 'balance_history' not in st.session_state:
 # Sidebar menu
 menu = st.sidebar.selectbox("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
+st.sidebar.text("Select start and end dates for data loading:")
+start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))
+end_date = st.sidebar.date_input("End Date", datetime.today())
+if start_date > end_date:
+    st.sidebar.error("Start date must be before end date.")
+    
 # Dashboard view
 if menu == "Dashboard":
     st.header("📊 Trading Dashboard")
@@ -144,7 +150,7 @@ if menu == "Dashboard":
     # Recent trade decisions table
     if st.session_state.trade_decisions:
         st.subheader("Recent Trading Decisions")
-        recent_trades = pd.DataFrame(st.session_state.trade_decisions[-10:])  # Show last 10 trades
+        recent_trades = pd.DataFrame(st.session_state.trade_decisions[-100:])  # Show last 10 trades
         
         # Format the DataFrame for display
         display_df = recent_trades.copy()
@@ -203,7 +209,7 @@ elif menu == "Backtest":
             
             # Actual training would happen here
             try:
-                train_df, test_df = load_and_prepare_data()
+                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date)
                 env, eval_env = create_env(train_df, test_df)
                 model = train_ppo_model(env, eval_env)
                 st.session_state.training_status = "Training completed successfully!"
@@ -216,10 +222,10 @@ elif menu == "Backtest":
             status_text.empty()
     
     with col2:
-        if st.button("Load Model", use_container_width=True):
+        if st.button("Backtest model", use_container_width=True):
             try:
                 model = load_model()
-                train_df, test_df = load_and_prepare_data()
+                train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
                 _, eval_env = create_env(train_df, test_df)
                 
                 # Initialize progress for backtest
@@ -227,7 +233,7 @@ elif menu == "Backtest":
                 backtest_status = st.empty()
                 
                 # Run backtest with progress updates
-                networth, trades = run_backtest(model, test_df)
+                networth, trades = run_backtest(model, test_df, env=eval_env)
                 
                 # Store results in session state
                 st.session_state.backtest_results = (networth, trades)
@@ -258,12 +264,12 @@ elif menu == "Backtest":
         st.sidebar.markdown(f'<div class="progress-bar"><div class="progress-fill" style="width: {st.session_state.training_progress}%;"></div></div>', unsafe_allow_html=True)
         st.sidebar.text(f"{st.session_state.training_progress}% complete")
     
-    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=1000, value=200, step=10)
+    max_trades = st.sidebar.slider("Max trades to display", min_value=50, max_value=5000, value=200, step=1)
     
     # Display backtest results if available
     if st.session_state.backtest_results:
         networth, trades = st.session_state.backtest_results
-        train_df, test_df = load_and_prepare_data()
+        _, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, split=False)
         
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs(["Equity Curve", "Trade Analysis", "Performance Metrics"])

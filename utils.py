@@ -11,9 +11,18 @@ from stable_baselines3 import PPO
 from envs.make_env import make_env
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from json import load
-with open("config.json", "r") as f:
-    CONFIG = load(f)
+
+
+def refresh_config():
+    """
+    Reloads the configuration from the config.json file.
+    """
+    import json
+    global CONFIG
+    with open('config.json', 'r') as f:
+        CONFIG = json.load(f)
+    print("Configuration reloaded")
+    return CONFIG
 
 def load_model():
     return PPO.load(CONFIG['model_save_path'])

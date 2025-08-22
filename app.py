@@ -6,12 +6,11 @@ from datetime import datetime
 from brokers.broker_alpaca import AlpacaBroker
 from brokers.broker_ccxt import CCXTBroker
 from models.train_ppo import train_ppo_model 
-from utils import run_backtest, create_env, load_and_prepare_data, load_model, plot_equity_curve, plot_trades
-import json
+from utils import run_backtest, create_env, load_and_prepare_data, load_model, plot_equity_curve, plot_trades, refresh_config
 
-from json import load
-with open("config.json", "r") as f:
-    CONFIG = load(f)
+import json
+CONFIG = refresh_config()
+
 
 # Set page configuration
 st.set_page_config(
@@ -466,3 +465,4 @@ if st.sidebar.button("Save Config"):
         file_name="config.json",
         mime="application/json"
     )
+    CONFIG = refresh_config()

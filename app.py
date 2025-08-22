@@ -104,9 +104,6 @@ if 'model' not in st.session_state:
 
 menu = st.sidebar.radio("Navigation Menu", ["Dashboard", "Backtest", "Live Trading", "Model Training"])
 
-symbol = st.sidebar.text_input("Asset Symbol", CONFIG["asset_symbol"], help="Enter the asset symbol (e.g., BTC/USD)")
-if symbol:
-    CONFIG["asset_symbol"] = symbol
 
 st.sidebar.text("Select start and end dates for data loading:")
 start_date = st.sidebar.date_input("Start Date", datetime(2020, 1, 1))

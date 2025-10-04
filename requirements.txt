@@ -1,3 +1,5 @@
+./pandas_ta-03.14b.tar.gz
+
 numpy == 1.26.4
 pandas >= 2.1
 yfinance >= 0.2.18
@@ -7,6 +9,7 @@ torch >= 2.3
 vectorbt >= 0.24.0
 scikit-learn >= 1.2
 matplotlib >= 3.6
+
 
 ccxt
 alpaca-trade-api

@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import lib_ta.pandas_ta as ta
 
-
-
 def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     """
     Enhances price DataFrame with a rich set of technical indicators.

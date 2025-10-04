@@ -16,3 +16,5 @@ alpha_vantage == 2.3.1
 plotly
 plotly-resampler
 tensorboard
+urllib3
+six

@@ -1,0 +1,20 @@
+pandas-ta==0.4.67b0
+numpy>=2.2.6
+pandas >= 2.1
+yfinance >= 0.2.18
+stable-baselines3 
+gymnasium >= 0.29
+torch >= 2.3
+vectorbt >= 0.24.0
+scikit-learn >= 1.2
+matplotlib >= 3.6
+
+
+ccxt
+alpaca-trade-api
+alpha_vantage == 2.3.1
+plotly
+plotly-resampler
+tensorboard
+urllib3
+six

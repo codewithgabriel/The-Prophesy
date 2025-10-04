@@ -59,8 +59,8 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     bb = ta.bbands(df["Close"], length=20, std=2)
     print(bb.columns.tolist())
     if bb is not None and not bb.empty:
-        pass
-        # df["bb_width"] = (bb["BBU_20_2.0"] - bb["BBL_20_2.0"]) / df["Close"]
+        
+        df["bb_width"] = (bb["BBU_20_2.0_2.0"] - bb["BBL_20_2.0_2.0"]) / df["Close"]
     else:
         df["bb_width"] = 0
 

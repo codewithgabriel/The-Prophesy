@@ -1,5 +1,4 @@
-pandas_ta-03.14b.tar.gz
-
+pandas_ta >= 0.3.14b0
 numpy == 1.26.4
 pandas >= 2.1
 yfinance >= 0.2.18

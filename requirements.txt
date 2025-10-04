@@ -1,4 +1,4 @@
-./pandas_ta-03.14b.tar.gz
+pandas_ta-03.14b.tar.gz
 
 numpy == 1.26.4
 pandas >= 2.1

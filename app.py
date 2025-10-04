@@ -385,7 +385,7 @@ elif menu == "Model Training":
     progress_bar = st.progress(0)
     status_text = st.empty()
     if st.button("Start Training"):
-        # try:
+        try:
             progress_bar.progress(10)
             train_df, test_df = load_and_prepare_data(start_date=start_date, end_date=end_date, interval=CONFIG["timeframe"])
             status_text.text("Data loaded successfully. Creating environments...")
@@ -404,11 +404,11 @@ elif menu == "Model Training":
                     file_name="ppo_trader_model.zip",
                     mime="application/zip"
                 )
-        # except Exception as e:
-        #     st.session_state.training_status = f"Training failed: {str(e)}"
-        #     st.error(f"Training error: {str(e)}")
-        #     progress_bar.empty()
-        #     status_text.empty()
+        except Exception as e:
+            st.session_state.training_status = f"Training failed: {str(e)}"
+            st.error(f"Training error: {str(e)}")
+            progress_bar.empty()
+            status_text.empty()
 
 # Configuration
 st.sidebar.header("Configuration")
